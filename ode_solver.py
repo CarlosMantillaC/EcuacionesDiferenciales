@@ -51,7 +51,12 @@ class ODESolver:
             else:
                 eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
             
-            solution = dsolve(eq, y, hint='separable')
+            solution = dsolve(eq, y)
+            
+            # Simplificar la solución
+            if isinstance(solution, list):
+                solution = solution[0]
+            
             return {
                 'success': True,
                 'solution': str(solution),
@@ -81,10 +86,18 @@ class ODESolver:
             else:
                 eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
             
-            solution = dsolve(eq, y, hint='1st_homogeneous_coeff_best')
+            # Intentar sin hint específico para mejor resultado
+            solution = dsolve(eq, y)
+            
+            # Simplificar la solución
+            if isinstance(solution, list):
+                solution = solution[0]
+            
+            solution_simplified = simplify(solution)
+            
             return {
                 'success': True,
-                'solution': str(solution),
+                'solution': str(solution_simplified),
                 'method': 'Ecuación Homogénea',
                 'steps': 'Sustitución: v = y/x, entonces y = vx y dy/dx = v + x(dv/dx)'
             }
@@ -163,7 +176,12 @@ class ODESolver:
             else:
                 eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
             
-            solution = dsolve(eq, y, hint='1st_linear')
+            solution = dsolve(eq, y)
+            
+            # Simplificar la solución
+            if isinstance(solution, list):
+                solution = solution[0]
+            
             return {
                 'success': True,
                 'solution': str(solution),
@@ -193,7 +211,12 @@ class ODESolver:
             else:
                 eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
             
-            solution = dsolve(eq, y, hint='Bernoulli')
+            solution = dsolve(eq, y)
+            
+            # Simplificar la solución
+            if isinstance(solution, list):
+                solution = solution[0]
+            
             return {
                 'success': True,
                 'solution': str(solution),
