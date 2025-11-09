@@ -4,7 +4,7 @@ Soporta: Variables separables, Homogéneas, Exactas, Lineales, Bernoulli, Factor
 """
 
 import sympy as sp
-from sympy import symbols, Function, Eq, dsolve, diff, integrate, simplify, exp, log, sqrt
+from sympy import symbols, Function, Eq, dsolve, diff, integrate, simplify, exp, log, sqrt, latex
 from sympy.parsing.sympy_parser import parse_expr
 import re
 
@@ -14,6 +14,38 @@ class ODESolver:
         self.x = symbols('x')
         self.y = Function('y')
         self.C1, self.C2 = symbols('C1 C2')
+    
+    def format_solution(self, solution):
+        """
+        Convierte la solución de SymPy a formato más legible
+        """
+        # Convertir a string
+        sol_str = str(solution)
+        
+        # Si es una ecuación Eq(y(x), ...), extraer solo el lado derecho
+        if sol_str.startswith('Eq(y(x), '):
+            # Extraer la parte después de 'Eq(y(x), ' y antes del último ')'
+            rhs = sol_str[9:-1]
+            sol_str = f"y(x) = {rhs}"
+        
+        # Reemplazos para hacer más legible
+        sol_str = sol_str.replace('**', '^')
+        sol_str = sol_str.replace('*', '·')
+        sol_str = sol_str.replace('exp(', 'e^(')
+        sol_str = sol_str.replace('log(', 'ln(')
+        sol_str = sol_str.replace('sqrt(', '√(')
+        
+        return sol_str
+    
+    def get_latex_solution(self, solution):
+        """
+        Convierte la solución a formato LaTeX
+        """
+        try:
+            latex_str = latex(solution)
+            return latex_str
+        except:
+            return str(solution)
     
     def parse_equation(self, equation_str):
         """
@@ -60,6 +92,8 @@ class ODESolver:
             return {
                 'success': True,
                 'solution': str(solution),
+                'solution_formatted': self.format_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
                 'method': 'Variables Separables',
                 'steps': self._get_separable_steps(eq)
             }
@@ -98,6 +132,8 @@ class ODESolver:
             return {
                 'success': True,
                 'solution': str(solution_simplified),
+                'solution_formatted': self.format_solution(solution_simplified),
+                'solution_latex': self.get_latex_solution(solution_simplified),
                 'method': 'Ecuación Homogénea',
                 'steps': 'Sustitución: v = y/x, entonces y = vx y dy/dx = v + x(dv/dx)'
             }
@@ -185,6 +221,8 @@ class ODESolver:
             return {
                 'success': True,
                 'solution': str(solution),
+                'solution_formatted': self.format_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
                 'method': 'Ecuación Lineal',
                 'steps': 'Forma estándar: dy/dx + P(x)y = Q(x)\nFactor integrante: μ(x) = e^(∫P(x)dx)'
             }
@@ -220,6 +258,8 @@ class ODESolver:
             return {
                 'success': True,
                 'solution': str(solution),
+                'solution_formatted': self.format_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
                 'method': 'Ecuación de Bernoulli',
                 'steps': f'Forma: dy/dx + P(x)y = Q(x)y^n\nSustitución: v = y^(1-n), transforma en ecuación lineal'
             }
@@ -311,6 +351,8 @@ class ODESolver:
             return {
                 'success': True,
                 'solution': str(solution),
+                'solution_formatted': self.format_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
                 'method': 'Método General',
                 'hints': hints
             }

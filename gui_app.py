@@ -130,6 +130,7 @@ class ODESolverGUI:
 • Exactas: M(x,y) = 2*x*y, N(x,y) = x**2 + 1
 • Lineales: dy/dx + y = x  |  y' + 2*x*y = x**2
 • Bernoulli: dy/dx + y = x*y**2  |  y' - y = x*y**3
+• Factores Integrantes: M(x,y) = 3*x**2 + y, N(x,y) = x**2*y - x
         """
         
         examples_label = tk.Label(
@@ -273,8 +274,22 @@ class ODESolverGUI:
             self.result_text.insert(tk.END, "✓ SOLUCIÓN ENCONTRADA\n\n", 'success')
             
             if 'solution' in result:
-                self.result_text.insert(tk.END, "Solución:\n", 'info')
-                self.result_text.insert(tk.END, f"{result['solution']}\n\n")
+                # Mostrar solución formateada si está disponible
+                if 'solution_formatted' in result:
+                    self.result_text.insert(tk.END, "Solución:\n", 'info')
+                    self.result_text.insert(tk.END, f"{result['solution_formatted']}\n\n", 'title')
+                    
+                    # Mostrar también en LaTeX
+                    if 'solution_latex' in result:
+                        self.result_text.insert(tk.END, "LaTeX:\n", 'info')
+                        self.result_text.insert(tk.END, f"{result['solution_latex']}\n\n")
+                    
+                    # Mostrar formato original (colapsado)
+                    self.result_text.insert(tk.END, "Formato SymPy:\n", 'info')
+                    self.result_text.insert(tk.END, f"{result['solution']}\n\n")
+                else:
+                    self.result_text.insert(tk.END, "Solución:\n", 'info')
+                    self.result_text.insert(tk.END, f"{result['solution']}\n\n")
             
             if 'factor' in result:
                 self.result_text.insert(tk.END, "Factor Integrante:\n", 'info')
