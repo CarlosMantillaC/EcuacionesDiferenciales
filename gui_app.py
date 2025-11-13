@@ -1,18 +1,23 @@
 """
 Interfaz gráfica para el solucionador de ecuaciones diferenciales
+Usando CustomTkinter para un diseño moderno
 """
 
-import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+import customtkinter as ctk
+from tkinter import messagebox
 from ode_solver import ODESolver
+
+
+# Configuración de apariencia
+ctk.set_appearance_mode("dark")  # Modes: "System", "Dark", "Light"
+ctk.set_default_color_theme("blue")  # Themes: "blue", "green", "dark-blue"
 
 
 class ODESolverGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Solucionador de Ecuaciones Diferenciales")
-        self.root.geometry("900x700")
-        self.root.configure(bg='#f0f0f0')
+        self.root.geometry("1100x800")
         
         self.solver = ODESolver()
         
@@ -20,213 +25,218 @@ class ODESolverGUI:
     
     def setup_ui(self):
         # Título
-        title_frame = tk.Frame(self.root, bg='#2c3e50', height=60)
-        title_frame.pack(fill='x', pady=(0, 10))
-        
-        title_label = tk.Label(
-            title_frame,
-            text="Solucionador de Ecuaciones Diferenciales Ordinarias",
-            font=('Arial', 16, 'bold'),
-            bg='#2c3e50',
-            fg='white'
+        title_label = ctk.CTkLabel(
+            self.root,
+            text="🔬 Solucionador de Ecuaciones Diferenciales Ordinarias",
+            font=ctk.CTkFont(size=24, weight="bold")
         )
-        title_label.pack(pady=15)
+        title_label.pack(pady=20)
         
-        # Frame principal
-        main_frame = tk.Frame(self.root, bg='#f0f0f0')
-        main_frame.pack(fill='both', expand=True, padx=20, pady=10)
+        # Frame principal con scrollbar
+        main_frame = ctk.CTkScrollableFrame(self.root)
+        main_frame.pack(fill='both', expand=True, padx=20, pady=(0, 20))
         
         # Selector de método
-        method_frame = tk.LabelFrame(
-            main_frame,
-            text="Seleccionar Método",
-            font=('Arial', 11, 'bold'),
-            bg='#f0f0f0',
-            padx=10,
-            pady=10
-        )
-        method_frame.pack(fill='x', pady=(0, 10))
+        method_frame = ctk.CTkFrame(main_frame)
+        method_frame.pack(fill='x', pady=(0, 15), padx=10)
         
-        self.method_var = tk.StringVar(value='general')
+        method_title = ctk.CTkLabel(
+            method_frame,
+            text="📐 Seleccionar Método de Resolución",
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        method_title.pack(pady=(15, 10))
+        
+        self.method_var = ctk.StringVar(value='general')
         
         methods = [
-            ('Método General (Automático)', 'general'),
-            ('Variables Separables', 'separable'),
-            ('Ecuaciones Homogéneas', 'homogeneous'),
-            ('Ecuaciones Exactas', 'exact'),
-            ('Ecuaciones Lineales', 'linear'),
-            ('Ecuaciones de Bernoulli', 'bernoulli'),
-            ('Factores Integrantes', 'integrating_factor')
+            ('🤖 Método General (Automático)', 'general'),
+            ('📊 Variables Separables', 'separable'),
+            ('🔄 Ecuaciones Homogéneas', 'homogeneous'),
+            ('✓ Ecuaciones Exactas', 'exact'),
+            ('📈 Ecuaciones Lineales', 'linear'),
+            ('🎯 Ecuaciones de Bernoulli', 'bernoulli'),
+            ('⚙️ Factores Integrantes', 'integrating_factor')
         ]
         
+        # Crear grid de radio buttons
+        radio_container = ctk.CTkFrame(method_frame, fg_color="transparent")
+        radio_container.pack(pady=(0, 15), padx=20)
+        
         for i, (text, value) in enumerate(methods):
-            rb = tk.Radiobutton(
-                method_frame,
+            rb = ctk.CTkRadioButton(
+                radio_container,
                 text=text,
                 variable=self.method_var,
                 value=value,
-                font=('Arial', 10),
-                bg='#f0f0f0',
+                font=ctk.CTkFont(size=13),
                 command=self.on_method_change
             )
-            rb.grid(row=i//2, column=i%2, sticky='w', padx=10, pady=5)
+            rb.grid(row=i//2, column=i%2, sticky='w', padx=15, pady=8)
         
         # Frame de entrada
-        input_frame = tk.LabelFrame(
-            main_frame,
-            text="Entrada de Ecuación",
-            font=('Arial', 11, 'bold'),
-            bg='#f0f0f0',
-            padx=10,
-            pady=10
+        input_frame = ctk.CTkFrame(main_frame)
+        input_frame.pack(fill='x', pady=(0, 15), padx=10)
+        
+        input_title = ctk.CTkLabel(
+            input_frame,
+            text="✏️ Entrada de Ecuación",
+            font=ctk.CTkFont(size=16, weight="bold")
         )
-        input_frame.pack(fill='x', pady=(0, 10))
+        input_title.pack(pady=(15, 10))
+        
+        # Container para inputs
+        input_container = ctk.CTkFrame(input_frame, fg_color="transparent")
+        input_container.pack(pady=(0, 15), padx=20, fill='x')
         
         # Entrada principal
-        self.equation_label = tk.Label(
-            input_frame,
+        self.equation_label = ctk.CTkLabel(
+            input_container,
             text="Ecuación (ej: dy/dx = x*y, y' = x + y):",
-            font=('Arial', 10),
-            bg='#f0f0f0'
+            font=ctk.CTkFont(size=13)
         )
-        self.equation_label.grid(row=0, column=0, sticky='w', pady=5)
+        self.equation_label.pack(anchor='w', pady=(5, 2))
         
-        self.equation_entry = tk.Entry(input_frame, font=('Arial', 11), width=60)
-        self.equation_entry.grid(row=0, column=1, padx=10, pady=5)
+        self.equation_entry = ctk.CTkEntry(
+            input_container,
+            font=ctk.CTkFont(size=14),
+            height=40,
+            placeholder_text="Ingrese su ecuación aquí..."
+        )
+        self.equation_entry.pack(fill='x', pady=(0, 10))
         
-        # Entradas para ecuaciones exactas (M y N)
-        self.m_label = tk.Label(
-            input_frame,
+        # Entradas para ecuaciones exactas (M y N) - inicialmente ocultas
+        self.m_label = ctk.CTkLabel(
+            input_container,
             text="M(x,y) (coeficiente de dx):",
-            font=('Arial', 10),
-            bg='#f0f0f0'
+            font=ctk.CTkFont(size=13)
         )
         
-        self.m_entry = tk.Entry(input_frame, font=('Arial', 11), width=60)
+        self.m_entry = ctk.CTkEntry(
+            input_container,
+            font=ctk.CTkFont(size=14),
+            height=40,
+            placeholder_text="Ej: 2*x*y"
+        )
         
-        self.n_label = tk.Label(
-            input_frame,
+        self.n_label = ctk.CTkLabel(
+            input_container,
             text="N(x,y) (coeficiente de dy):",
-            font=('Arial', 10),
-            bg='#f0f0f0'
+            font=ctk.CTkFont(size=13)
         )
         
-        self.n_entry = tk.Entry(input_frame, font=('Arial', 11), width=60)
+        self.n_entry = ctk.CTkEntry(
+            input_container,
+            font=ctk.CTkFont(size=14),
+            height=40,
+            placeholder_text="Ej: x**2 + 1"
+        )
         
         # Frame de ejemplos
-        examples_frame = tk.LabelFrame(
-            main_frame,
-            text="Ejemplos",
-            font=('Arial', 10, 'bold'),
-            bg='#f0f0f0',
-            padx=10,
-            pady=5
+        examples_frame = ctk.CTkFrame(main_frame, fg_color=("gray85", "gray20"))
+        examples_frame.pack(fill='x', pady=(0, 15), padx=10)
+        
+        examples_title = ctk.CTkLabel(
+            examples_frame,
+            text="💡 Ejemplos de Ecuaciones",
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        examples_frame.pack(fill='x', pady=(0, 10))
+        examples_title.pack(pady=(10, 5))
         
-        examples_text = """
-• Variables Separables: dy/dx = x*y  |  y' = x/y
-• Homogéneas: dy/dx = (x+y)/x  |  y' = y/x + x/y
-• Exactas: M(x,y) = 2*x*y, N(x,y) = x**2 + 1
-• Lineales: dy/dx + y = x  |  y' + 2*x*y = x**2
-• Bernoulli: dy/dx + y = x*y**2  |  y' - y = x*y**3
-• Factores Integrantes: M(x,y) = 3*x**2 + y, N(x,y) = x**2*y - x
-        """
+        examples_text = """📊 Variables Separables: dy/dx = x*y  |  y' = x/y
+🔄 Homogéneas: dy/dx = (x+y)/x  |  y' = y/x + x/y
+✓ Exactas: M(x,y) = 2*x*y, N(x,y) = x**2 + 1
+📈 Lineales: dy/dx + y = x  |  y' + 2*x*y = x**2
+🎯 Bernoulli: dy/dx + y = x*y**2  |  y' - y = x*y**3
+⚙️ Factores Integrantes: M(x,y) = 3*x**2 + y, N(x,y) = x**2*y - x"""
         
-        examples_label = tk.Label(
+        examples_label = ctk.CTkLabel(
             examples_frame,
             text=examples_text,
-            font=('Arial', 9),
-            bg='#f0f0f0',
+            font=ctk.CTkFont(size=12),
             justify='left'
         )
-        examples_label.pack()
+        examples_label.pack(pady=(5, 10), padx=20)
         
         # Botones
-        button_frame = tk.Frame(main_frame, bg='#f0f0f0')
-        button_frame.pack(fill='x', pady=10)
+        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        button_frame.pack(fill='x', pady=15, padx=10)
         
-        solve_button = tk.Button(
-            button_frame,
-            text="Resolver",
+        button_container = ctk.CTkFrame(button_frame, fg_color="transparent")
+        button_container.pack()
+        
+        solve_button = ctk.CTkButton(
+            button_container,
+            text="🚀 Resolver Ecuación",
             command=self.solve_equation,
-            font=('Arial', 12, 'bold'),
-            bg='#27ae60',
-            fg='white',
-            padx=30,
-            pady=10,
-            cursor='hand2'
+            font=ctk.CTkFont(size=15, weight="bold"),
+            height=45,
+            width=200,
+            fg_color="#27ae60",
+            hover_color="#229954"
         )
-        solve_button.pack(side='left', padx=5)
+        solve_button.pack(side='left', padx=10)
         
-        clear_button = tk.Button(
-            button_frame,
-            text="Limpiar",
+        clear_button = ctk.CTkButton(
+            button_container,
+            text="🗑️ Limpiar",
             command=self.clear_all,
-            font=('Arial', 12, 'bold'),
-            bg='#e74c3c',
-            fg='white',
-            padx=30,
-            pady=10,
-            cursor='hand2'
+            font=ctk.CTkFont(size=15, weight="bold"),
+            height=45,
+            width=150,
+            fg_color="#e74c3c",
+            hover_color="#c0392b"
         )
-        clear_button.pack(side='left', padx=5)
+        clear_button.pack(side='left', padx=10)
         
         # Área de resultados
-        result_frame = tk.LabelFrame(
-            main_frame,
-            text="Solución",
-            font=('Arial', 11, 'bold'),
-            bg='#f0f0f0',
-            padx=10,
-            pady=10
-        )
-        result_frame.pack(fill='both', expand=True)
+        result_frame = ctk.CTkFrame(main_frame)
+        result_frame.pack(fill='both', expand=True, pady=(0, 15), padx=10)
         
-        self.result_text = scrolledtext.ScrolledText(
+        result_title = ctk.CTkLabel(
             result_frame,
-            font=('Courier', 11),
-            wrap=tk.WORD,
-            height=15,
-            bg='#ffffff'
+            text="📋 Solución",
+            font=ctk.CTkFont(size=16, weight="bold")
         )
-        self.result_text.pack(fill='both', expand=True)
+        result_title.pack(pady=(15, 10))
         
-        # Configurar tags para formato
-        self.result_text.tag_config('title', font=('Arial', 12, 'bold'), foreground='#2c3e50')
-        self.result_text.tag_config('success', foreground='#27ae60', font=('Arial', 11, 'bold'))
-        self.result_text.tag_config('error', foreground='#e74c3c', font=('Arial', 11, 'bold'))
-        self.result_text.tag_config('info', foreground='#3498db')
+        self.result_text = ctk.CTkTextbox(
+            result_frame,
+            font=ctk.CTkFont(family="Consolas", size=13),
+            wrap='word',
+            height=300
+        )
+        self.result_text.pack(fill='both', expand=True, padx=20, pady=(0, 15))
     
     def on_method_change(self):
         """Actualiza la interfaz según el método seleccionado"""
         method = self.method_var.get()
         
         # Ocultar todos los campos adicionales
-        self.m_label.grid_forget()
-        self.m_entry.grid_forget()
-        self.n_label.grid_forget()
-        self.n_entry.grid_forget()
+        self.m_label.pack_forget()
+        self.m_entry.pack_forget()
+        self.n_label.pack_forget()
+        self.n_entry.pack_forget()
         
         if method in ['exact', 'integrating_factor']:
             # Mostrar campos M y N
-            self.equation_label.config(text="Ecuación en forma M(x,y)dx + N(x,y)dy = 0")
-            self.equation_entry.grid_forget()
+            self.equation_label.configure(text="Ecuación en forma M(x,y)dx + N(x,y)dy = 0")
+            self.equation_entry.pack_forget()
             
-            self.m_label.grid(row=0, column=0, sticky='w', pady=5)
-            self.m_entry.grid(row=0, column=1, padx=10, pady=5)
-            self.n_label.grid(row=1, column=0, sticky='w', pady=5)
-            self.n_entry.grid(row=1, column=1, padx=10, pady=5)
+            self.m_label.pack(anchor='w', pady=(5, 2))
+            self.m_entry.pack(fill='x', pady=(0, 10))
+            self.n_label.pack(anchor='w', pady=(5, 2))
+            self.n_entry.pack(fill='x', pady=(0, 10))
         else:
             # Mostrar campo de ecuación normal
-            self.equation_label.config(text="Ecuación (ej: dy/dx = x*y, y' = x + y):")
-            self.equation_entry.grid(row=0, column=1, padx=10, pady=5)
+            self.equation_label.configure(text="Ecuación (ej: dy/dx = x*y, y' = x + y):")
+            self.equation_entry.pack(fill='x', pady=(0, 10))
     
     def solve_equation(self):
         """Resuelve la ecuación según el método seleccionado"""
         method = self.method_var.get()
         
-        self.result_text.delete(1.0, tk.END)
+        self.result_text.delete("1.0", "end")
         
         try:
             if method in ['exact', 'integrating_factor']:
@@ -262,72 +272,72 @@ class ODESolverGUI:
             self.display_result(result)
             
         except Exception as e:
-            self.result_text.insert(tk.END, "ERROR\n", 'error')
-            self.result_text.insert(tk.END, f"\n{str(e)}\n")
+            self.result_text.insert("end", "❌ ERROR\n\n")
+            self.result_text.insert("end", f"{str(e)}\n")
     
     def display_result(self, result):
         """Muestra el resultado en el área de texto"""
-        self.result_text.insert(tk.END, f"MÉTODO: {result['method']}\n", 'title')
-        self.result_text.insert(tk.END, "="*80 + "\n\n")
+        self.result_text.insert("end", f"📌 MÉTODO: {result['method']}\n")
+        self.result_text.insert("end", "="*80 + "\n\n")
         
         if result['success']:
-            self.result_text.insert(tk.END, "✓ SOLUCIÓN ENCONTRADA\n\n", 'success')
+            self.result_text.insert("end", "✅ SOLUCIÓN ENCONTRADA\n\n")
             
             if 'solution' in result:
                 # Mostrar solución formateada si está disponible
                 if 'solution_formatted' in result:
-                    self.result_text.insert(tk.END, "Solución:\n", 'info')
-                    self.result_text.insert(tk.END, f"{result['solution_formatted']}\n\n", 'title')
+                    self.result_text.insert("end", "📊 Solución:\n")
+                    self.result_text.insert("end", f"   {result['solution_formatted']}\n\n")
                     
                     # Mostrar también en LaTeX
                     if 'solution_latex' in result:
-                        self.result_text.insert(tk.END, "LaTeX:\n", 'info')
-                        self.result_text.insert(tk.END, f"{result['solution_latex']}\n\n")
+                        self.result_text.insert("end", "📐 LaTeX:\n")
+                        self.result_text.insert("end", f"   {result['solution_latex']}\n\n")
                     
-                    # Mostrar formato original (colapsado)
-                    self.result_text.insert(tk.END, "Formato SymPy:\n", 'info')
-                    self.result_text.insert(tk.END, f"{result['solution']}\n\n")
+                    # Mostrar formato original
+                    self.result_text.insert("end", "🔤 Formato SymPy:\n")
+                    self.result_text.insert("end", f"   {result['solution']}\n\n")
                 else:
-                    self.result_text.insert(tk.END, "Solución:\n", 'info')
-                    self.result_text.insert(tk.END, f"{result['solution']}\n\n")
+                    self.result_text.insert("end", "📊 Solución:\n")
+                    self.result_text.insert("end", f"   {result['solution']}\n\n")
             
             if 'factor' in result:
-                self.result_text.insert(tk.END, "Factor Integrante:\n", 'info')
-                self.result_text.insert(tk.END, f"{result['type']} = {result['factor']}\n\n")
+                self.result_text.insert("end", "⚙️ Factor Integrante:\n")
+                self.result_text.insert("end", f"   {result['type']} = {result['factor']}\n\n")
             
             if 'steps' in result:
-                self.result_text.insert(tk.END, "Pasos:\n", 'info')
-                self.result_text.insert(tk.END, f"{result['steps']}\n\n")
+                self.result_text.insert("end", "📝 Pasos:\n")
+                self.result_text.insert("end", f"{result['steps']}\n\n")
             
             if 'hints' in result:
-                self.result_text.insert(tk.END, "Clasificación:\n", 'info')
+                self.result_text.insert("end", "🔍 Clasificación:\n")
                 for hint in result['hints'][:5]:  # Mostrar primeros 5 hints
-                    self.result_text.insert(tk.END, f"  • {hint}\n")
+                    self.result_text.insert("end", f"  • {hint}\n")
             
             if 'is_exact' in result and result['is_exact']:
-                self.result_text.insert(tk.END, "\n✓ La ecuación es EXACTA\n", 'success')
+                self.result_text.insert("end", "\n✅ La ecuación es EXACTA\n")
         else:
-            self.result_text.insert(tk.END, "✗ NO SE PUDO RESOLVER\n\n", 'error')
-            self.result_text.insert(tk.END, f"Error: {result['error']}\n\n")
+            self.result_text.insert("end", "❌ NO SE PUDO RESOLVER\n\n")
+            self.result_text.insert("end", f"Error: {result['error']}\n\n")
             
             if 'is_exact' in result and not result['is_exact']:
-                self.result_text.insert(tk.END, "La ecuación NO es exacta.\n", 'error')
-                self.result_text.insert(tk.END, "Intente usar el método de Factores Integrantes.\n")
+                self.result_text.insert("end", "⚠️ La ecuación NO es exacta.\n")
+                self.result_text.insert("end", "💡 Intente usar el método de Factores Integrantes.\n")
             
             if 'dM_dy' in result:
-                self.result_text.insert(tk.END, f"\n∂M/∂y = {result['dM_dy']}\n")
-                self.result_text.insert(tk.END, f"∂N/∂x = {result['dN_dx']}\n")
+                self.result_text.insert("end", f"\n∂M/∂y = {result['dM_dy']}\n")
+                self.result_text.insert("end", f"∂N/∂x = {result['dN_dx']}\n")
     
     def clear_all(self):
         """Limpia todos los campos"""
-        self.equation_entry.delete(0, tk.END)
-        self.m_entry.delete(0, tk.END)
-        self.n_entry.delete(0, tk.END)
-        self.result_text.delete(1.0, tk.END)
+        self.equation_entry.delete(0, "end")
+        self.m_entry.delete(0, "end")
+        self.n_entry.delete(0, "end")
+        self.result_text.delete("1.0", "end")
 
 
 def main():
-    root = tk.Tk()
+    root = ctk.CTk()
     app = ODESolverGUI(root)
     root.mainloop()
 
