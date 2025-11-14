@@ -53,10 +53,14 @@ class ODESolver:
         Formatos aceptados:
         - dy/dx = f(x,y)
         - y' = f(x,y)
+        - y'' = f(x,y,y')
         - M(x,y) + N(x,y)*dy/dx = 0
         """
         equation_str = equation_str.replace(' ', '')
-        # Primero reemplazar dy/dx y y' antes de reemplazar y
+        # Reemplazar derivadas de segundo orden primero
+        equation_str = equation_str.replace("y''", "Derivative(y(x), x, 2)")
+        equation_str = equation_str.replace("d2y/dx2", "Derivative(y(x), x, 2)")
+        # Luego primeras derivadas
         equation_str = equation_str.replace('dy/dx', "Derivative(y(x), x)")
         equation_str = equation_str.replace("y'", "Derivative(y(x), x)")
         # Reemplazar y solo cuando no es parte de Derivative
@@ -362,6 +366,262 @@ class ODESolver:
                 'error': str(e),
                 'method': 'Método General'
             }
+    
+    def solve_second_order_constant_coeff(self, equation_str):
+        """
+        Resuelve ecuaciones lineales de segundo orden con coeficientes constantes
+        ay'' + by' + cy = 0 o ay'' + by' + cy = g(x)
+        """
+        try:
+            y = self.y(self.x)
+            eq_str = self.parse_equation(equation_str)
+            
+            if '=' in eq_str:
+                parts = eq_str.split('=')
+                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = Eq(lhs, rhs)
+            else:
+                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+            
+            solution = dsolve(eq, y)
+            
+            # Obtener coeficientes para ecuación característica
+            hints = sp.classify_ode(eq, y)
+            is_homogeneous = 'nth_linear_constant_coeff_homogeneous' in hints
+            
+            steps = self._get_second_order_steps(eq, is_homogeneous)
+            
+            return {
+                'success': True,
+                'solution': str(solution),
+                'solution_formatted': self.format_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
+                'method': 'Ecuación de Segundo Orden con Coeficientes Constantes',
+                'steps': steps,
+                'is_homogeneous': is_homogeneous
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'method': 'Ecuación de Segundo Orden con Coeficientes Constantes'
+            }
+    
+    def solve_cauchy_euler(self, equation_str):
+        """
+        Resuelve ecuaciones de Cauchy-Euler
+        ax²y'' + bxy' + cy = 0
+        """
+        try:
+            y = self.y(self.x)
+            eq_str = self.parse_equation(equation_str)
+            
+            if '=' in eq_str:
+                parts = eq_str.split('=')
+                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = Eq(lhs, rhs)
+            else:
+                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+            
+            solution = dsolve(eq, y)
+            
+            steps = """Ecuación de Cauchy-Euler: ax²y'' + bxy' + cy = 0
+Sustitución: y = x^m
+Ecuación característica: am(m-1) + bm + c = 0
+Casos:
+  • Raíces reales distintas m₁, m₂: y = C₁x^m₁ + C₂x^m₂
+  • Raíz doble m: y = (C₁ + C₂ln(x))x^m
+  • Raíces complejas α±βi: y = x^α(C₁cos(βln(x)) + C₂sin(βln(x)))"""
+            
+            return {
+                'success': True,
+                'solution': str(solution),
+                'solution_formatted': self.format_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
+                'method': 'Ecuación de Cauchy-Euler',
+                'steps': steps
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'method': 'Ecuación de Cauchy-Euler'
+            }
+    
+    def solve_reducible_to_first_order(self, equation_str, case_type='general'):
+        """
+        Resuelve ecuaciones reducibles a primer orden
+        Casos: y'' = f(x), y'' = f(y'), y'' = f(y, y')
+        """
+        try:
+            y = self.y(self.x)
+            eq_str = self.parse_equation(equation_str)
+            
+            if '=' in eq_str:
+                parts = eq_str.split('=')
+                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = Eq(lhs, rhs)
+            else:
+                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+            
+            solution = dsolve(eq, y)
+            
+            steps_dict = {
+                'f_x': 'Caso: y\'\' = f(x)\nSolución: Integrar dos veces\ny\' = ∫f(x)dx + C₁\ny = ∫(∫f(x)dx)dx + C₁x + C₂',
+                'f_yp': 'Caso: y\'\' = f(y\')\nSustitución: p = y\', entonces y\'\' = dp/dx\nSe reduce a: dp/dx = f(p)',
+                'f_y_yp': 'Caso: y\'\' = f(y, y\')\nSustitución: p = y\', entonces y\'\' = p(dp/dy)\nSe reduce a ecuación de primer orden en p',
+                'general': 'Ecuación reducible a primer orden mediante sustitución apropiada'
+            }
+            
+            steps = steps_dict.get(case_type, steps_dict['general'])
+            
+            return {
+                'success': True,
+                'solution': str(solution),
+                'solution_formatted': self.format_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
+                'method': 'Ecuación Reducible a Primer Orden',
+                'steps': steps
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'method': 'Ecuación Reducible a Primer Orden'
+            }
+    
+    def solve_variation_of_parameters(self, equation_str):
+        """
+        Resuelve ecuaciones no homogéneas usando variación de parámetros
+        ay'' + by' + cy = g(x)
+        """
+        try:
+            y = self.y(self.x)
+            eq_str = self.parse_equation(equation_str)
+            
+            if '=' in eq_str:
+                parts = eq_str.split('=')
+                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = Eq(lhs, rhs)
+            else:
+                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+            
+            solution = dsolve(eq, y)
+            
+            steps = """Método de Variación de Parámetros:
+1. Resolver ecuación homogénea: ay'' + by' + cy = 0 → y_h
+2. Encontrar soluciones fundamentales y₁, y₂
+3. Calcular Wronskiano: W = y₁y₂' - y₁'y₂
+4. Solución particular: y_p = -y₁∫(y₂g/W)dx + y₂∫(y₁g/W)dx
+5. Solución general: y = y_h + y_p"""
+            
+            return {
+                'success': True,
+                'solution': str(solution),
+                'solution_formatted': self.format_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
+                'method': 'Variación de Parámetros',
+                'steps': steps
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'method': 'Variación de Parámetros'
+            }
+    
+    def solve_linear_system(self, system_equations, variables_str='x,y'):
+        """
+        Resuelve sistemas de ecuaciones diferenciales lineales
+        X' = AX usando el método matricial
+        
+        system_equations: lista de ecuaciones como strings
+        variables_str: variables del sistema separadas por comas
+        """
+        try:
+            t = symbols('t')
+            vars_list = [v.strip() for v in variables_str.split(',')]
+            
+            # Crear funciones simbólicas
+            funcs = [Function(v) for v in vars_list]
+            
+            # Parsear ecuaciones
+            equations = []
+            for eq_str in system_equations:
+                # Reemplazar notaciones
+                eq_str = eq_str.replace(' ', '')
+                for i, var in enumerate(vars_list):
+                    eq_str = eq_str.replace(f"{var}'", f"Derivative({var}(t), t)")
+                    eq_str = re.sub(rf'\b{var}\b(?!\()', f'{var}(t)', eq_str)
+                
+                if '=' in eq_str:
+                    parts = eq_str.split('=')
+                    local_dict = {'t': t, 'Derivative': sp.Derivative}
+                    for i, var in enumerate(vars_list):
+                        local_dict[var] = funcs[i]
+                    
+                    lhs = parse_expr(parts[0], local_dict=local_dict)
+                    rhs = parse_expr(parts[1], local_dict=local_dict)
+                    equations.append(Eq(lhs, rhs))
+            
+            # Resolver el sistema
+            solution = dsolve(equations)
+            
+            steps = """Método Matricial para Sistemas Lineales:
+Sistema: X' = AX donde X = [x₁, x₂, ..., xₙ]ᵀ
+
+1. Formar la matriz A de coeficientes
+2. Encontrar valores propios λᵢ de A (det(A - λI) = 0)
+3. Encontrar vectores propios vᵢ para cada λᵢ
+4. Casos:
+   • Valores propios reales distintos: X = Σ Cᵢvᵢe^(λᵢt)
+   • Valores propios repetidos: Incluir términos con t·e^(λt)
+   • Valores propios complejos α±βi: Usar e^(αt)(cos(βt) + i·sin(βt))"""
+            
+            return {
+                'success': True,
+                'solution': str(solution),
+                'solution_formatted': self._format_system_solution(solution),
+                'solution_latex': self.get_latex_solution(solution),
+                'method': 'Sistema de Ecuaciones Diferenciales Lineales',
+                'steps': steps,
+                'variables': vars_list
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'method': 'Sistema de Ecuaciones Diferenciales Lineales'
+            }
+    
+    def _format_system_solution(self, solution):
+        """Formatea la solución de un sistema de ecuaciones"""
+        if isinstance(solution, list):
+            formatted = []
+            for sol in solution:
+                formatted.append(str(sol))
+            return '\n'.join(formatted)
+        return str(solution)
+    
+    def _get_second_order_steps(self, eq, is_homogeneous):
+        """Genera pasos para ecuaciones de segundo orden con coeficientes constantes"""
+        if is_homogeneous:
+            return """Ecuación homogénea: ay'' + by' + cy = 0
+1. Ecuación característica: ar² + br + c = 0
+2. Resolver para r (raíces r₁, r₂)
+3. Casos:
+   • Raíces reales distintas: y = C₁e^(r₁x) + C₂e^(r₂x)
+   • Raíz doble r: y = (C₁ + C₂x)e^(rx)
+   • Raíces complejas α±βi: y = e^(αx)(C₁cos(βx) + C₂sin(βx))"""
+        else:
+            return """Ecuación no homogénea: ay'' + by' + cy = g(x)
+1. Solución homogénea: y_h (resolver ay'' + by' + cy = 0)
+2. Solución particular: y_p (usando coeficientes indeterminados o variación de parámetros)
+3. Solución general: y = y_h + y_p"""
     
     def _get_separable_steps(self, eq):
         """Genera pasos para ecuaciones separables"""
