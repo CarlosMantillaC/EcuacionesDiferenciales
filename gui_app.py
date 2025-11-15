@@ -3,8 +3,16 @@ Interfaz gráfica para el solucionador de ecuaciones diferenciales
 Usando CustomTkinter para un diseño moderno
 """
 
+import io
+
 import customtkinter as ctk
 from tkinter import messagebox
+from PIL import Image, ImageTk
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 from ode_solver import ODESolver
 
 
@@ -20,6 +28,7 @@ class ODESolverGUI:
         self.root.geometry("1100x800")
         
         self.solver = ODESolver()
+        self.latex_image = None
         
         self.setup_ui()
     
@@ -233,24 +242,17 @@ SEGUNDO ORDEN:
         )
         clear_button.pack(side='left', padx=10)
         
-        # Área de resultados
-        result_frame = ctk.CTkFrame(main_frame)
-        result_frame.pack(fill='both', expand=True, pady=(0, 15), padx=10)
-        
-        result_title = ctk.CTkLabel(
-            result_frame,
-            text="📋 Solución",
+        # Título y contenedor para solución en LaTeX
+        self.solution_title = ctk.CTkLabel(
+            main_frame,
+            text="",
             font=ctk.CTkFont(size=16, weight="bold")
         )
-        result_title.pack(pady=(15, 10))
+        self.solution_title.pack(pady=(10, 0))
         
-        self.result_text = ctk.CTkTextbox(
-            result_frame,
-            font=ctk.CTkFont(family="Consolas", size=13),
-            wrap='word',
-            height=300
-        )
-        self.result_text.pack(fill='both', expand=True, padx=20, pady=(0, 15))
+        self.latex_image_label = ctk.CTkLabel(main_frame, text="")
+        self.latex_image_label.pack(pady=(5, 15))
+        self.latex_image_label.pack_forget()
     
     def on_method_change(self):
         """Actualiza la interfaz según el método seleccionado"""
@@ -282,8 +284,6 @@ SEGUNDO ORDEN:
     def solve_equation(self):
         """Resuelve la ecuación según el método seleccionado"""
         method = self.method_var.get()
-        
-        self.result_text.delete("1.0", "end")
         
         try:
             if method in ['exact', 'integrating_factor']:
@@ -322,73 +322,68 @@ SEGUNDO ORDEN:
                 elif method == 'variation_params':
                     result = self.solver.solve_variation_of_parameters(equation)
             
-            self.display_result(result)
+            self._show_latex_solution(result)
             
         except Exception as e:
-            self.result_text.insert("end", "❌ ERROR\n\n")
-            self.result_text.insert("end", f"{str(e)}\n")
+            messagebox.showerror("Error", str(e))
     
-    def display_result(self, result):
-        """Muestra el resultado en el área de texto"""
-        self.result_text.insert("end", f"📌 MÉTODO: {result['method']}\n")
-        self.result_text.insert("end", "="*80 + "\n\n")
-        
-        if result['success']:
-            self.result_text.insert("end", "✅ SOLUCIÓN ENCONTRADA\n\n")
-            
-            if 'solution' in result:
-                # Mostrar solución formateada si está disponible
-                if 'solution_formatted' in result:
-                    self.result_text.insert("end", "📊 Solución:\n")
-                    self.result_text.insert("end", f"   {result['solution_formatted']}\n\n")
-                    
-                    # Mostrar también en LaTeX
-                    if 'solution_latex' in result:
-                        self.result_text.insert("end", "📐 LaTeX:\n")
-                        self.result_text.insert("end", f"   {result['solution_latex']}\n\n")
-                    
-                    # Mostrar formato original
-                    self.result_text.insert("end", "🔤 Formato SymPy:\n")
-                    self.result_text.insert("end", f"   {result['solution']}\n\n")
-                else:
-                    self.result_text.insert("end", "📊 Solución:\n")
-                    self.result_text.insert("end", f"   {result['solution']}\n\n")
-            
-            if 'factor' in result:
-                self.result_text.insert("end", "⚙️ Factor Integrante:\n")
-                self.result_text.insert("end", f"   {result['type']} = {result['factor']}\n\n")
-            
-            if 'steps' in result:
-                self.result_text.insert("end", "📝 Pasos:\n")
-                self.result_text.insert("end", f"{result['steps']}\n\n")
-            
-            if 'hints' in result:
-                self.result_text.insert("end", "🔍 Clasificación:\n")
-                for hint in result['hints'][:5]:  # Mostrar primeros 5 hints
-                    self.result_text.insert("end", f"  • {hint}\n")
-            
-            if 'is_exact' in result and result['is_exact']:
-                self.result_text.insert("end", "\n✅ La ecuación es EXACTA\n")
+    def _show_latex_solution(self, result):
+        if not result.get('success'):
+            messagebox.showerror("Error", result.get('error', 'No se pudo resolver la ecuación'))
+            self.solution_title.configure(text="")
+            self._clear_latex_image()
+            return
+        latex_text = result.get('solution_latex') or result.get('solution')
+        if not latex_text:
+            latex_text = 'No se encontró una solución.'
+        self.solution_title.configure(text="📐 Solución en LaTeX")
+        self._display_latex_image(latex_text)
+
+    def _display_latex_image(self, latex_str):
+        image = self._render_latex_image(latex_str)
+        if image:
+            self.latex_image = image
+            self.latex_image_label.configure(image=self.latex_image, text="")
+            self.latex_image_label.pack(pady=(5, 15))
         else:
-            self.result_text.insert("end", "❌ NO SE PUDO RESOLVER\n\n")
-            self.result_text.insert("end", f"Error: {result['error']}\n\n")
-            
-            if 'is_exact' in result and not result['is_exact']:
-                self.result_text.insert("end", "⚠️ La ecuación NO es exacta.\n")
-                self.result_text.insert("end", "💡 Intente usar el método de Factores Integrantes.\n")
-            
-            if 'dM_dy' in result:
-                self.result_text.insert("end", f"\n∂M/∂y = {result['dM_dy']}\n")
-                self.result_text.insert("end", f"∂N/∂x = {result['dN_dx']}\n")
-    
+            self._clear_latex_image()
+
+    def _clear_latex_image(self):
+        self.latex_image = None
+        self.latex_image_label.configure(image=None, text="")
+        self.latex_image_label.pack_forget()
+
+    def _render_latex_image(self, latex_str):
+        try:
+            buffer = io.BytesIO()
+            fig = plt.figure(figsize=(0.01, 0.01), dpi=300)
+            fig.patch.set_facecolor('none')
+            ax = fig.add_subplot(111)
+            ax.axis('off')
+            ax.text(
+                0.5,
+                0.5,
+                f"${latex_str}$",
+                fontsize=18,
+                ha='center',
+                va='center',
+                color='white'
+            )
+            fig.savefig(buffer, format='png', bbox_inches='tight', pad_inches=0.3, transparent=True)
+            plt.close(fig)
+            buffer.seek(0)
+            image = Image.open(buffer).convert('RGBA')
+            return ImageTk.PhotoImage(image)
+        except Exception:
+            return None
+
     def clear_all(self):
         """Limpia todos los campos"""
         self.equation_entry.delete(0, "end")
         self.m_entry.delete(0, "end")
         self.n_entry.delete(0, "end")
-        self.system_text.delete("1.0", "end")
-        self.vars_entry.delete(0, "end")
-        self.result_text.delete("1.0", "end")
+        self.solution_title.configure(text="")
+        self._clear_latex_image()
 
 
 def main():

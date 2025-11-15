@@ -1,2 +1,4 @@
 sympy==1.12
 customtkinter
+matplotlib
+pillow

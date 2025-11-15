@@ -38,13 +38,14 @@ class ODESolver:
         return sol_str
     
     def get_latex_solution(self, solution):
-        """
-        Convierte la solución a formato LaTeX
-        """
+        """Convierte la solución a formato LaTeX legible"""
         try:
-            latex_str = latex(solution)
-            return latex_str
-        except:
+            if isinstance(solution, sp.Eq):
+                lhs = latex(solution.lhs)
+                rhs = latex(solution.rhs)
+                return f"{lhs} = {rhs}"
+            return latex(solution)
+        except Exception:
             return str(solution)
     
     def parse_equation(self, equation_str):
