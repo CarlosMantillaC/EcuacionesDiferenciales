@@ -1,6 +1,6 @@
 # 🔬 Solucionador de Ecuaciones Diferenciales Ordinarias
 
-Aplicación completa en Python para resolver ecuaciones diferenciales ordinarias (EDOs) de primer y segundo orden, así como sistemas de ecuaciones lineales.
+Aplicación completa en Python para resolver ecuaciones diferenciales ordinarias (EDOs) de primer y segundo orden.
 
 ## ✨ Características
 
@@ -20,19 +20,11 @@ Aplicación completa en Python para resolver ecuaciones diferenciales ordinarias
   - Raíces reales distintas
   - Raíz doble
   - Raíces complejas conjugadas
-- **Ecuación de Cauchy-Euler**: `ax²y'' + bxy' + cy = 0`
 - **Reducibles a Primer Orden**: 
   - `y'' = f(x)`
   - `y'' = f(y')`
   - `y'' = f(y, y')`
 - **Variación de Parámetros**: Para ecuaciones no homogéneas
-
-### 🔗 Sistemas de Ecuaciones
-
-- **Método Matricial**: Solución de sistemas lineales `X' = AX`
-  - Valores propios reales distintos
-  - Valores propios repetidos
-  - Valores propios complejos
 
 ## 🚀 Instalación
 
@@ -79,7 +71,7 @@ La interfaz incluye:
 python ejemplos.py
 ```
 
-**Ejemplos de segundo orden y sistemas:**
+**Ejemplos de segundo orden:**
 ```bash
 python ejemplos_segundo_orden.py
 ```
@@ -99,9 +91,8 @@ print(result['solution_formatted'])
 result = solver.solve_second_order_constant_coeff("y'' - 3*y' + 2*y = 0")
 print(result['solution_formatted'])
 
-# Ejemplo 3: Sistema de ecuaciones
-equations = ["x' = x + 2*y", "y' = 3*x + 2*y"]
-result = solver.solve_linear_system(equations, "x,y")
+# Ejemplo 3: Variación de parámetros
+result = solver.solve_variation_of_parameters("y'' + y = sec(x)")
 print(result['solution_formatted'])
 ```
 
@@ -136,9 +127,6 @@ N = "x**2 + 1"
 # Coeficientes constantes no homogénea
 "y'' + y = x"
 
-# Cauchy-Euler
-"x**2*y'' + x*y' - y = 0"
-
 # Reducible a primer orden
 "y'' = x"
 
@@ -147,24 +135,6 @@ N = "x**2 + 1"
 
 # Raíz doble
 "y'' - 2*y' + y = 0"
-```
-
-### Sistemas
-
-```python
-# Sistema 2x2
-equations = [
-    "x' = x + 2*y",
-    "y' = 3*x + 2*y"
-]
-variables = "x,y"
-
-# Sistema con otras variables
-equations = [
-    "f' = -f + g",
-    "g' = 2*f - 2*g"
-]
-variables = "f,g"
 ```
 
 ## 🔧 Tecnologías Utilizadas
@@ -198,7 +168,7 @@ EcuacionesDiferenciales/
 - ✅ Ventana responsive (1100x800px)
 
 ### Funcionalidades
-- 📐 **14 métodos de resolución** organizados en 3 categorías
+- 📐 **10 métodos de resolución** organizados en 2 categorías
 - ✏️ **Entrada dinámica** según el método seleccionado
 - 💡 **Ejemplos contextuales** para cada tipo de ecuación
 - 📋 **Múltiples formatos de salida**:

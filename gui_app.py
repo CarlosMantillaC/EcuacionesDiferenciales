@@ -94,7 +94,6 @@ class ODESolverGUI:
         
         methods_second_order = [
             ('🔢 Coeficientes Constantes', 'second_order_const'),
-            ('🌀 Cauchy-Euler', 'cauchy_euler'),
             ('🔄 Reducible a Primer Orden', 'reducible'),
             ('📐 Variación de Parámetros', 'variation_params')
         ]
@@ -105,33 +104,6 @@ class ODESolverGUI:
         for i, (text, value) in enumerate(methods_second_order):
             rb = ctk.CTkRadioButton(
                 radio_container2,
-                text=text,
-                variable=self.method_var,
-                value=value,
-                font=ctk.CTkFont(size=13),
-                command=self.on_method_change
-            )
-            rb.grid(row=i//2, column=i%2, sticky='w', padx=15, pady=8)
-        
-        # Separador para sistemas
-        separator3 = ctk.CTkLabel(
-            method_frame,
-            text="━━━ SISTEMAS DE ECUACIONES ━━━",
-            font=ctk.CTkFont(size=12, weight="bold"),
-            text_color=("gray50", "gray70")
-        )
-        separator3.pack(pady=(10, 10))
-        
-        methods_systems = [
-            ('🔗 Sistema Lineal (Método Matricial)', 'linear_system')
-        ]
-        
-        radio_container3 = ctk.CTkFrame(method_frame, fg_color="transparent")
-        radio_container3.pack(pady=(0, 15), padx=20)
-        
-        for i, (text, value) in enumerate(methods_systems):
-            rb = ctk.CTkRadioButton(
-                radio_container3,
                 text=text,
                 variable=self.method_var,
                 value=value,
@@ -198,32 +170,6 @@ class ODESolverGUI:
             placeholder_text="Ej: x**2 + 1"
         )
         
-        # Entradas para sistemas de ecuaciones - inicialmente ocultas
-        self.system_label = ctk.CTkLabel(
-            input_container,
-            text="Sistema de Ecuaciones (una por línea):",
-            font=ctk.CTkFont(size=13)
-        )
-        
-        self.system_text = ctk.CTkTextbox(
-            input_container,
-            font=ctk.CTkFont(size=14),
-            height=100
-        )
-        
-        self.vars_label = ctk.CTkLabel(
-            input_container,
-            text="Variables del sistema (separadas por comas):",
-            font=ctk.CTkFont(size=13)
-        )
-        
-        self.vars_entry = ctk.CTkEntry(
-            input_container,
-            font=ctk.CTkFont(size=14),
-            height=40,
-            placeholder_text="Ej: x,y  o  f,g"
-        )
-        
         # Frame de ejemplos
         examples_frame = ctk.CTkFrame(main_frame, fg_color=("gray85", "gray20"))
         examples_frame.pack(fill='x', pady=(0, 15), padx=10)
@@ -245,12 +191,8 @@ class ODESolverGUI:
 
 SEGUNDO ORDEN:
 🔢 Coef. Constantes: y'' - 3*y' + 2*y = 0  |  y'' + y = x
-🌀 Cauchy-Euler: x**2*y'' + x*y' - y = 0
 🔄 Reducible: y'' = x  |  y'' = y'**2
-📐 Variación: y'' + y = sec(x)
-
-SISTEMAS:
-🔗 Sistema Lineal: x' = x + 2*y, y' = 3*x + 2*y  (Variables: x,y)"""
+📐 Variación: y'' + y = sec(x)"""
         
         examples_label = ctk.CTkLabel(
             examples_frame,
@@ -319,10 +261,6 @@ SISTEMAS:
         self.m_entry.pack_forget()
         self.n_label.pack_forget()
         self.n_entry.pack_forget()
-        self.system_label.pack_forget()
-        self.system_text.pack_forget()
-        self.vars_label.pack_forget()
-        self.vars_entry.pack_forget()
         
         if method in ['exact', 'integrating_factor']:
             # Mostrar campos M y N
@@ -333,18 +271,9 @@ SISTEMAS:
             self.m_entry.pack(fill='x', pady=(0, 10))
             self.n_label.pack(anchor='w', pady=(5, 2))
             self.n_entry.pack(fill='x', pady=(0, 10))
-        elif method == 'linear_system':
-            # Mostrar campos para sistema
-            self.equation_label.configure(text="Sistema de Ecuaciones Diferenciales:")
-            self.equation_entry.pack_forget()
-            
-            self.system_label.pack(anchor='w', pady=(5, 2))
-            self.system_text.pack(fill='both', pady=(0, 10))
-            self.vars_label.pack(anchor='w', pady=(5, 2))
-            self.vars_entry.pack(fill='x', pady=(0, 10))
         else:
             # Mostrar campo de ecuación normal
-            if method in ['second_order_const', 'cauchy_euler', 'reducible', 'variation_params']:
+            if method in ['second_order_const', 'reducible', 'variation_params']:
                 self.equation_label.configure(text="Ecuación de Segundo Orden (ej: y'' - 3*y' + 2*y = 0):")
             else:
                 self.equation_label.configure(text="Ecuación (ej: dy/dx = x*y, y' = x + y):")
@@ -369,17 +298,6 @@ SISTEMAS:
                     result = self.solver.solve_exact(M_str, N_str)
                 else:
                     result = self.solver.find_integrating_factor(M_str, N_str)
-            elif method == 'linear_system':
-                system_str = self.system_text.get("1.0", "end").strip()
-                vars_str = self.vars_entry.get().strip()
-                
-                if not system_str or not vars_str:
-                    messagebox.showerror("Error", "Por favor ingrese el sistema y las variables")
-                    return
-                
-                # Separar ecuaciones por líneas
-                equations = [eq.strip() for eq in system_str.split('\n') if eq.strip()]
-                result = self.solver.solve_linear_system(equations, vars_str)
             else:
                 equation = self.equation_entry.get().strip()
                 
@@ -399,8 +317,6 @@ SISTEMAS:
                     result = self.solver.solve_bernoulli(equation)
                 elif method == 'second_order_const':
                     result = self.solver.solve_second_order_constant_coeff(equation)
-                elif method == 'cauchy_euler':
-                    result = self.solver.solve_cauchy_euler(equation)
                 elif method == 'reducible':
                     result = self.solver.solve_reducible_to_first_order(equation)
                 elif method == 'variation_params':

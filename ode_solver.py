@@ -408,48 +408,6 @@ class ODESolver:
                 'method': 'Ecuación de Segundo Orden con Coeficientes Constantes'
             }
     
-    def solve_cauchy_euler(self, equation_str):
-        """
-        Resuelve ecuaciones de Cauchy-Euler
-        ax²y'' + bxy' + cy = 0
-        """
-        try:
-            y = self.y(self.x)
-            eq_str = self.parse_equation(equation_str)
-            
-            if '=' in eq_str:
-                parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                eq = Eq(lhs, rhs)
-            else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-            
-            solution = dsolve(eq, y)
-            
-            steps = """Ecuación de Cauchy-Euler: ax²y'' + bxy' + cy = 0
-Sustitución: y = x^m
-Ecuación característica: am(m-1) + bm + c = 0
-Casos:
-  • Raíces reales distintas m₁, m₂: y = C₁x^m₁ + C₂x^m₂
-  • Raíz doble m: y = (C₁ + C₂ln(x))x^m
-  • Raíces complejas α±βi: y = x^α(C₁cos(βln(x)) + C₂sin(βln(x)))"""
-            
-            return {
-                'success': True,
-                'solution': str(solution),
-                'solution_formatted': self.format_solution(solution),
-                'solution_latex': self.get_latex_solution(solution),
-                'method': 'Ecuación de Cauchy-Euler',
-                'steps': steps
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'method': 'Ecuación de Cauchy-Euler'
-            }
-    
     def solve_reducible_to_first_order(self, equation_str, case_type='general'):
         """
         Resuelve ecuaciones reducibles a primer orden
@@ -534,78 +492,6 @@ Casos:
                 'method': 'Variación de Parámetros'
             }
     
-    def solve_linear_system(self, system_equations, variables_str='x,y'):
-        """
-        Resuelve sistemas de ecuaciones diferenciales lineales
-        X' = AX usando el método matricial
-        
-        system_equations: lista de ecuaciones como strings
-        variables_str: variables del sistema separadas por comas
-        """
-        try:
-            t = symbols('t')
-            vars_list = [v.strip() for v in variables_str.split(',')]
-            
-            # Crear funciones simbólicas
-            funcs = [Function(v) for v in vars_list]
-            
-            # Parsear ecuaciones
-            equations = []
-            for eq_str in system_equations:
-                # Reemplazar notaciones
-                eq_str = eq_str.replace(' ', '')
-                for i, var in enumerate(vars_list):
-                    eq_str = eq_str.replace(f"{var}'", f"Derivative({var}(t), t)")
-                    eq_str = re.sub(rf'\b{var}\b(?!\()', f'{var}(t)', eq_str)
-                
-                if '=' in eq_str:
-                    parts = eq_str.split('=')
-                    local_dict = {'t': t, 'Derivative': sp.Derivative}
-                    for i, var in enumerate(vars_list):
-                        local_dict[var] = funcs[i]
-                    
-                    lhs = parse_expr(parts[0], local_dict=local_dict)
-                    rhs = parse_expr(parts[1], local_dict=local_dict)
-                    equations.append(Eq(lhs, rhs))
-            
-            # Resolver el sistema
-            solution = dsolve(equations)
-            
-            steps = """Método Matricial para Sistemas Lineales:
-Sistema: X' = AX donde X = [x₁, x₂, ..., xₙ]ᵀ
-
-1. Formar la matriz A de coeficientes
-2. Encontrar valores propios λᵢ de A (det(A - λI) = 0)
-3. Encontrar vectores propios vᵢ para cada λᵢ
-4. Casos:
-   • Valores propios reales distintos: X = Σ Cᵢvᵢe^(λᵢt)
-   • Valores propios repetidos: Incluir términos con t·e^(λt)
-   • Valores propios complejos α±βi: Usar e^(αt)(cos(βt) + i·sin(βt))"""
-            
-            return {
-                'success': True,
-                'solution': str(solution),
-                'solution_formatted': self._format_system_solution(solution),
-                'solution_latex': self.get_latex_solution(solution),
-                'method': 'Sistema de Ecuaciones Diferenciales Lineales',
-                'steps': steps,
-                'variables': vars_list
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'method': 'Sistema de Ecuaciones Diferenciales Lineales'
-            }
-    
-    def _format_system_solution(self, solution):
-        """Formatea la solución de un sistema de ecuaciones"""
-        if isinstance(solution, list):
-            formatted = []
-            for sol in solution:
-                formatted.append(str(sol))
-            return '\n'.join(formatted)
-        return str(solution)
     
     def _get_second_order_steps(self, eq, is_homogeneous):
         """Genera pasos para ecuaciones de segundo orden con coeficientes constantes"""
