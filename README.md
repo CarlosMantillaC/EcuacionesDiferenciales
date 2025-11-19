@@ -61,7 +61,7 @@ La interfaz incluye:
 - 📐 Selector de métodos organizado por categorías
 - ✏️ Entrada intuitiva de ecuaciones
 - 💡 Ejemplos integrados
-- 📋 Resultados con múltiples formatos (legible, LaTeX, SymPy)
+- 📋 Resultado formato LaTeX
 - 📝 Pasos de resolución detallados
 - 🎯 Condiciones iniciales opcionales para obtener soluciones particulares
 
