@@ -65,6 +65,14 @@ La interfaz incluye:
 - 📝 Pasos de resolución detallados
 - 🎯 Condiciones iniciales opcionales para obtener soluciones particulares
 
+### Cómo ingresar condiciones iniciales en la GUI
+
+1. Selecciona cualquier método diferente de **Exactas** o **Factor integrante**.
+2. Escribe la ecuación usando `x` como variable y `y` como función (por ejemplo `4*y'' + 4*y' + 17*y = 0`).
+3. Completa, si quieres una solución particular, los campos `x0`, `y(x0)` y `y'(x0)`.
+   - Puedes dejar en blanco `y(x0)` o `y'(x0)` si solo conoces uno de los dos.
+4. Pulsa **Resolver** para ver la solución simbólica y su representación en LaTeX.
+
 ### Ejemplos desde Terminal
 
 **Ejemplos de primer orden:**
@@ -175,8 +183,7 @@ EcuacionesDiferenciales/
 - ✏️ **Entrada dinámica** según el método seleccionado
 - 💡 **Ejemplos contextuales** para cada tipo de ecuación
 - 🎯 **Condiciones iniciales opcionales** (campos para \(x_0, y(x_0), y'(x_0)\)) para obtener soluciones particulares sin salir de la GUI
-- 📋 **Múltiples formatos de salida**:
-  - Formato LaTeX renderizado como imagen (tamaño adaptativo)
+- 📋 **Formato de salida** (LaTeX renderizado como imagen con tamaño adaptativo)
 - 📝 **Pasos de resolución** detallados
 - 🔍 **Clasificación automática** de ecuaciones y manejo de casos especiales (p. ej. \(y\,y'' + (y')^2 = 0\))
 
