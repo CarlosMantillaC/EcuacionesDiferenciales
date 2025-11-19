@@ -204,10 +204,6 @@ Las contribuciones son bienvenidas. Por favor:
 
 Este proyecto es de código abierto y está disponible para uso educativo.
 
-## 👨‍💻 Autor
-
-**CarlosMantillaC**
-
 ## 🙏 Agradecimientos
 
 - **SymPy**: Por la increíble biblioteca de álgebra simbólica
