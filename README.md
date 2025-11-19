@@ -63,6 +63,7 @@ La interfaz incluye:
 - 💡 Ejemplos integrados
 - 📋 Resultados con múltiples formatos (legible, LaTeX, SymPy)
 - 📝 Pasos de resolución detallados
+- 🎯 Condiciones iniciales opcionales para obtener soluciones particulares
 
 ### Ejemplos desde Terminal
 
@@ -91,9 +92,11 @@ print(result['solution_formatted'])
 result = solver.solve_second_order_constant_coeff("y'' - 3*y' + 2*y = 0")
 print(result['solution_formatted'])
 
-# Ejemplo 3: Variación de parámetros
-result = solver.solve_variation_of_parameters("y'' + y = sec(x)")
+# Ejemplo 3: Solución particular con condiciones iniciales
+ics = {"x0": 0, "y0": -1, "yp0": 2}
+result = solver.solve_second_order_constant_coeff("4*y'' + 4*y' + 17*y = 0", initial_conditions=ics)
 print(result['solution_formatted'])
+
 ```
 
 ## 📝 Ejemplos de Ecuaciones
@@ -171,12 +174,11 @@ EcuacionesDiferenciales/
 - 📐 **10 métodos de resolución** organizados en 2 categorías
 - ✏️ **Entrada dinámica** según el método seleccionado
 - 💡 **Ejemplos contextuales** para cada tipo de ecuación
+- 🎯 **Condiciones iniciales opcionales** (campos para \(x_0, y(x_0), y'(x_0)\)) para obtener soluciones particulares sin salir de la GUI
 - 📋 **Múltiples formatos de salida**:
-  - Formato legible con símbolos matemáticos
-  - Formato LaTeX para documentos
-  - Formato SymPy original
+  - Formato LaTeX renderizado como imagen (tamaño adaptativo)
 - 📝 **Pasos de resolución** detallados
-- 🔍 **Clasificación automática** de ecuaciones
+- 🔍 **Clasificación automática** de ecuaciones y manejo de casos especiales (p. ej. \(y\,y'' + (y')^2 = 0\))
 
 ## 🧪 Tests
 
@@ -203,10 +205,6 @@ Las contribuciones son bienvenidas. Por favor:
 ## 📄 Licencia
 
 Este proyecto es de código abierto y está disponible para uso educativo.
-
-## 👨‍💻 Autor
-
-**CarlosMantillaC**
 
 ## 🙏 Agradecimientos
 
