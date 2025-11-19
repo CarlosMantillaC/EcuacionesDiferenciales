@@ -342,21 +342,25 @@ SEGUNDO ORDEN:
     def _display_latex_image(self, latex_str):
         image = self._render_latex_image(latex_str)
         if image:
+            self.latex_image_label.configure(image=image, text="")
+            self.latex_image_label.image = image  # Evitar recolección de basura
             self.latex_image = image
-            self.latex_image_label.configure(image=self.latex_image, text="")
             self.latex_image_label.pack(pady=(5, 15))
         else:
             self._clear_latex_image()
 
     def _clear_latex_image(self):
-        self.latex_image = None
         self.latex_image_label.configure(image=None, text="")
+        self.latex_image_label.image = None
+        self.latex_image = None
         self.latex_image_label.pack_forget()
 
     def _render_latex_image(self, latex_str):
         try:
             buffer = io.BytesIO()
-            fig = plt.figure(figsize=(0.01, 0.01), dpi=300)
+            text_len = max(len(latex_str), 1)
+            width = min(max(text_len * 0.12, 3), 8)
+            fig = plt.figure(figsize=(width, 1.3), dpi=200)
             fig.patch.set_facecolor('none')
             ax = fig.add_subplot(111)
             ax.axis('off')
@@ -369,7 +373,7 @@ SEGUNDO ORDEN:
                 va='center',
                 color='white'
             )
-            fig.savefig(buffer, format='png', bbox_inches='tight', pad_inches=0.3, transparent=True)
+            fig.savefig(buffer, format='png', bbox_inches='tight', pad_inches=0.15, transparent=True)
             plt.close(fig)
             buffer.seek(0)
             image = Image.open(buffer).convert('RGBA')

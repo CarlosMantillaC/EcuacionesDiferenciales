@@ -5,7 +5,7 @@ Soporta: Variables separables, Homogéneas, Exactas, Lineales, Bernoulli, Factor
 
 import sympy as sp
 from sympy import symbols, Function, Eq, dsolve, diff, integrate, simplify, exp, log, sqrt, latex
-from sympy.parsing.sympy_parser import parse_expr
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 import re
 
 
@@ -14,6 +14,17 @@ class ODESolver:
         self.x = symbols('x')
         self.y = Function('y')
         self.C1, self.C2 = symbols('C1 C2')
+        self.parse_locals = {
+            'x': self.x,
+            'y': self.y,
+            'Derivative': sp.Derivative,
+            'E': sp.E,
+            'e': sp.E,
+            'pi': sp.pi,
+            'PI': sp.pi,
+            'exp': sp.exp
+        }
+        self.transformations = standard_transformations + (implicit_multiplication_application,)
     
     def format_solution(self, solution):
         """
@@ -64,12 +75,19 @@ class ODESolver:
         # Luego primeras derivadas
         equation_str = equation_str.replace('dy/dx', "Derivative(y(x), x)")
         equation_str = equation_str.replace("y'", "Derivative(y(x), x)")
-        # Reemplazar y solo cuando no es parte de Derivative
+        # Reemplazar y -> y(x) incluso cuando está pegado a coeficientes, evitando dobles reemplazos
         import re
-        # Reemplazar y que no esté seguido de (x) y no esté dentro de Derivative
-        equation_str = re.sub(r'\by\b(?!\()', 'y(x)', equation_str)
+        placeholder = "__YFUNC__"
+        equation_str = equation_str.replace('y(x)', placeholder)
+        equation_str = re.sub(r'y(?!\()', 'y(x)', equation_str)
+        equation_str = equation_str.replace(placeholder, 'y(x)')
         
         return equation_str
+
+    def _parse(self, expr, local_dict=None):
+        """Helper para parsear expresiones habilitando multiplicación implícita"""
+        loc = local_dict or self.parse_locals
+        return parse_expr(expr, local_dict=loc, transformations=self.transformations)
     
     def solve_separable(self, equation_str):
         """
@@ -82,11 +100,11 @@ class ODESolver:
             # Intentar resolver con dsolve
             if '=' in eq_str:
                 parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                lhs = self._parse(parts[0])
+                rhs = self._parse(parts[1])
                 eq = Eq(lhs, rhs)
             else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = self._parse(eq_str)
             
             solution = dsolve(eq, y)
             
@@ -119,11 +137,11 @@ class ODESolver:
             
             if '=' in eq_str:
                 parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                lhs = self._parse(parts[0])
+                rhs = self._parse(parts[1])
                 eq = Eq(lhs, rhs)
             else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = self._parse(eq_str)
             
             # Intentar sin hint específico para mejor resultado
             solution = dsolve(eq, y)
@@ -160,8 +178,9 @@ class ODESolver:
             M_str = M_str.replace('y', 'y').replace('x', 'x')
             N_str = N_str.replace('y', 'y').replace('x', 'x')
             
-            M = parse_expr(M_str, local_dict={'x': x, 'y': y})
-            N = parse_expr(N_str, local_dict={'x': x, 'y': y})
+            local_symbols = {'x': x, 'y': y, 'E': sp.E, 'e': sp.E, 'pi': sp.pi, 'PI': sp.pi, 'exp': sp.exp}
+            M = self._parse(M_str, local_dict=local_symbols)
+            N = self._parse(N_str, local_dict=local_symbols)
             
             # Verificar si es exacta
             dM_dy = diff(M, y)
@@ -211,11 +230,11 @@ class ODESolver:
             
             if '=' in eq_str:
                 parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                lhs = self._parse(parts[0])
+                rhs = self._parse(parts[1])
                 eq = Eq(lhs, rhs)
             else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = self._parse(eq_str)
             
             solution = dsolve(eq, y)
             
@@ -248,11 +267,11 @@ class ODESolver:
             
             if '=' in eq_str:
                 parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                lhs = self._parse(parts[0])
+                rhs = self._parse(parts[1])
                 eq = Eq(lhs, rhs)
             else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = self._parse(eq_str)
             
             solution = dsolve(eq, y)
             
@@ -282,8 +301,9 @@ class ODESolver:
         try:
             x, y = self.x, symbols('y')
             
-            M = parse_expr(M_str, local_dict={'x': x, 'y': y})
-            N = parse_expr(N_str, local_dict={'x': x, 'y': y})
+            local_dict = {'x': x, 'y': y, 'E': sp.E, 'e': sp.E, 'pi': sp.pi, 'PI': sp.pi, 'exp': sp.exp}
+            M = self._parse(M_str, local_dict=local_dict)
+            N = self._parse(N_str, local_dict=local_dict)
             
             dM_dy = diff(M, y)
             dN_dx = diff(N, x)
@@ -342,11 +362,11 @@ class ODESolver:
             
             if '=' in eq_str:
                 parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                lhs = self._parse(parts[0])
+                rhs = self._parse(parts[1])
                 eq = Eq(lhs, rhs)
             else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = self._parse(eq_str)
             
             solution = dsolve(eq, y)
             
@@ -379,11 +399,11 @@ class ODESolver:
             
             if '=' in eq_str:
                 parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                lhs = self._parse(parts[0])
+                rhs = self._parse(parts[1])
                 eq = Eq(lhs, rhs)
             else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = self._parse(eq_str)
             
             solution = dsolve(eq, y)
             
@@ -420,11 +440,11 @@ class ODESolver:
             
             if '=' in eq_str:
                 parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                lhs = self._parse(parts[0])
+                rhs = self._parse(parts[1])
                 eq = Eq(lhs, rhs)
             else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = self._parse(eq_str)
             
             solution = dsolve(eq, y)
             
@@ -463,11 +483,11 @@ class ODESolver:
             
             if '=' in eq_str:
                 parts = eq_str.split('=')
-                lhs = parse_expr(parts[0], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
-                rhs = parse_expr(parts[1], local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                lhs = self._parse(parts[0])
+                rhs = self._parse(parts[1])
                 eq = Eq(lhs, rhs)
             else:
-                eq = parse_expr(eq_str, local_dict={'x': self.x, 'y': self.y, 'Derivative': sp.Derivative})
+                eq = self._parse(eq_str)
             
             solution = dsolve(eq, y)
             
