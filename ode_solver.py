@@ -106,6 +106,10 @@ class ODESolver:
             else:
                 eq = self._parse(eq_str)
             
+            special_solution = self._solve_special_cases(eq)
+            if special_solution:
+                return special_solution
+            
             solution = dsolve(eq, y)
             
             # Simplificar la solución
@@ -368,6 +372,10 @@ class ODESolver:
             else:
                 eq = self._parse(eq_str)
             
+            special_solution = self._solve_special_cases(eq)
+            if special_solution:
+                return special_solution
+            
             solution = dsolve(eq, y)
             
             # Obtener el tipo de ecuación
@@ -533,3 +541,38 @@ class ODESolver:
     def _get_separable_steps(self, eq):
         """Genera pasos para ecuaciones separables"""
         return "1. Separar variables: g(y)dy = f(x)dx\n2. Integrar ambos lados\n3. Resolver para y"
+
+    def _solve_special_cases(self, eq):
+        """Intenta resolver casos especiales no cubiertos por SymPy"""
+        handlers = (
+            self._solve_case_y_times_ypp_plus_yp_sq,
+        )
+        for handler in handlers:
+            result = handler(eq)
+            if result:
+                return result
+        return None
+
+    def _solve_case_y_times_ypp_plus_yp_sq(self, eq):
+        y = self.y(self.x)
+        if isinstance(eq, sp.Equality):
+            expr = sp.simplify(eq.lhs - eq.rhs)
+        else:
+            expr = sp.simplify(eq)
+        target = sp.simplify(sp.diff(y * diff(y, self.x), self.x))
+        if sp.simplify(expr - target) == 0:
+            solution_eq = Eq(y**2, self.C1 * self.x + self.C2)
+            steps = (
+                "1. Observa que d/dx[y·y'] = y·y'' + (y')^2\n"
+                "2. Integra una vez: y·y' = C₁\n"
+                "3. Integra nuevamente: y^2 = C₁x + C₂"
+            )
+            return {
+                'success': True,
+                'solution': str(solution_eq),
+                'solution_formatted': self.format_solution(solution_eq),
+                'solution_latex': self.get_latex_solution(solution_eq),
+                'method': "Caso especial: y·y'' + (y')² = 0",
+                'steps': steps
+            }
+        return None
