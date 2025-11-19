@@ -89,7 +89,34 @@ class ODESolver:
         loc = local_dict or self.parse_locals
         return parse_expr(expr, local_dict=loc, transformations=self.transformations)
     
-    def solve_separable(self, equation_str):
+    def _dsolve(self, eq, y, initial_conditions=None):
+        ics = self._prepare_ics(initial_conditions)
+        if ics:
+            return dsolve(eq, y, ics=ics)
+        return dsolve(eq, y)
+    
+    def _prepare_ics(self, initial_conditions):
+        if not initial_conditions:
+            return None
+        x0 = initial_conditions.get('x0') if isinstance(initial_conditions, dict) else None
+        y0 = initial_conditions.get('y0') if isinstance(initial_conditions, dict) else None
+        yp0 = initial_conditions.get('yp0') if isinstance(initial_conditions, dict) else None
+        if not any([y0, yp0]):
+            return None
+        if x0 is None:
+            raise ValueError("Debe especificar x0 para aplicar condiciones iniciales")
+        try:
+            x0 = sp.sympify(x0)
+            ics = {}
+            if y0 is not None:
+                ics[self.y(self.x).subs(self.x, x0)] = sp.sympify(y0)
+            if yp0 is not None:
+                ics[diff(self.y(self.x), self.x).subs(self.x, x0)] = sp.sympify(yp0)
+            return ics or None
+        except (sp.SympifyError, ValueError) as exc:
+            raise ValueError(f"Condiciones iniciales inválidas: {exc}")
+    
+    def solve_separable(self, equation_str, initial_conditions=None):
         """
         Resuelve ecuaciones de variables separables: dy/dx = f(x)g(y)
         """
@@ -110,7 +137,7 @@ class ODESolver:
             if special_solution:
                 return special_solution
             
-            solution = dsolve(eq, y)
+            solution = self._dsolve(eq, y, initial_conditions)
             
             # Simplificar la solución
             if isinstance(solution, list):
@@ -131,7 +158,7 @@ class ODESolver:
                 'method': 'Variables Separables'
             }
     
-    def solve_homogeneous(self, equation_str):
+    def solve_homogeneous(self, equation_str, initial_conditions=None):
         """
         Resuelve ecuaciones homogéneas: dy/dx = f(y/x)
         """
@@ -147,8 +174,11 @@ class ODESolver:
             else:
                 eq = self._parse(eq_str)
             
-            # Intentar sin hint específico para mejor resultado
-            solution = dsolve(eq, y)
+            special_solution = self._solve_special_cases(eq)
+            if special_solution:
+                return special_solution
+            
+            solution = self._dsolve(eq, y, initial_conditions)
             
             # Simplificar la solución
             if isinstance(solution, list):
@@ -224,7 +254,7 @@ class ODESolver:
                 'method': 'Ecuación Exacta'
             }
     
-    def solve_linear(self, equation_str):
+    def solve_linear(self, equation_str, initial_conditions=None):
         """
         Resuelve ecuaciones lineales: dy/dx + P(x)y = Q(x)
         """
@@ -240,7 +270,7 @@ class ODESolver:
             else:
                 eq = self._parse(eq_str)
             
-            solution = dsolve(eq, y)
+            solution = self._dsolve(eq, y, initial_conditions)
             
             # Simplificar la solución
             if isinstance(solution, list):
@@ -261,7 +291,7 @@ class ODESolver:
                 'method': 'Ecuación Lineal'
             }
     
-    def solve_bernoulli(self, equation_str, n=None):
+    def solve_bernoulli(self, equation_str, n=None, initial_conditions=None):
         """
         Resuelve ecuaciones de Bernoulli: dy/dx + P(x)y = Q(x)y^n
         """
@@ -277,7 +307,7 @@ class ODESolver:
             else:
                 eq = self._parse(eq_str)
             
-            solution = dsolve(eq, y)
+            solution = self._dsolve(eq, y, initial_conditions)
             
             # Simplificar la solución
             if isinstance(solution, list):
@@ -356,7 +386,7 @@ class ODESolver:
                 'method': 'Factor Integrante'
             }
     
-    def solve_general(self, equation_str):
+    def solve_general(self, equation_str, initial_conditions=None):
         """
         Intenta resolver la ecuación con el método general de SymPy
         """
@@ -376,7 +406,7 @@ class ODESolver:
             if special_solution:
                 return special_solution
             
-            solution = dsolve(eq, y)
+            solution = self._dsolve(eq, y, initial_conditions)
             
             # Obtener el tipo de ecuación
             hints = sp.classify_ode(eq, y)
@@ -396,7 +426,7 @@ class ODESolver:
                 'method': 'Método General'
             }
     
-    def solve_second_order_constant_coeff(self, equation_str):
+    def solve_second_order_constant_coeff(self, equation_str, initial_conditions=None):
         """
         Resuelve ecuaciones lineales de segundo orden con coeficientes constantes
         ay'' + by' + cy = 0 o ay'' + by' + cy = g(x)
@@ -437,7 +467,7 @@ class ODESolver:
                 'method': 'Ecuación de Segundo Orden con Coeficientes Constantes'
             }
     
-    def solve_reducible_to_first_order(self, equation_str, case_type='general'):
+    def solve_reducible_to_first_order(self, equation_str, case_type='general', initial_conditions=None):
         """
         Resuelve ecuaciones reducibles a primer orden
         Casos: y'' = f(x), y'' = f(y'), y'' = f(y, y')
@@ -480,7 +510,7 @@ class ODESolver:
                 'method': 'Ecuación Reducible a Primer Orden'
             }
     
-    def solve_variation_of_parameters(self, equation_str):
+    def solve_variation_of_parameters(self, equation_str, initial_conditions=None):
         """
         Resuelve ecuaciones no homogéneas usando variación de parámetros
         ay'' + by' + cy = g(x)

@@ -152,6 +152,35 @@ class ODESolverGUI:
         )
         self.equation_entry.pack(fill='x', pady=(0, 10))
         
+        # Condiciones iniciales (opcional)
+        self.ic_frame = ctk.CTkFrame(input_container, fg_color="transparent")
+        self.ic_frame.pack(fill='x', pady=(5, 5))
+        ic_title = ctk.CTkLabel(
+            self.ic_frame,
+            text="Condiciones iniciales (opcional)",
+            font=ctk.CTkFont(size=13, weight="bold")
+        )
+        ic_title.grid(row=0, column=0, columnspan=3, sticky='w', pady=(0, 5))
+        
+        self.x0_entry = ctk.CTkEntry(
+            self.ic_frame,
+            width=120,
+            placeholder_text="x0"
+        )
+        self.x0_entry.grid(row=1, column=0, padx=5, pady=5, sticky='we')
+        self.y0_entry = ctk.CTkEntry(
+            self.ic_frame,
+            width=120,
+            placeholder_text="y(x0)"
+        )
+        self.y0_entry.grid(row=1, column=1, padx=5, pady=5, sticky='we')
+        self.yp0_entry = ctk.CTkEntry(
+            self.ic_frame,
+            width=120,
+            placeholder_text="y'(x0)"
+        )
+        self.yp0_entry.grid(row=1, column=2, padx=5, pady=5, sticky='we')
+        
         # Entradas para ecuaciones exactas (M y N) - inicialmente ocultas
         self.m_label = ctk.CTkLabel(
             input_container,
@@ -268,6 +297,7 @@ SEGUNDO ORDEN:
             # Mostrar campos M y N
             self.equation_label.configure(text="Ecuación en forma M(x,y)dx + N(x,y)dy = 0")
             self.equation_entry.pack_forget()
+            self.ic_frame.pack_forget()
             
             self.m_label.pack(anchor='w', pady=(5, 2))
             self.m_entry.pack(fill='x', pady=(0, 10))
@@ -280,6 +310,8 @@ SEGUNDO ORDEN:
             else:
                 self.equation_label.configure(text="Ecuación (ej: dy/dx = x*y, y' = x + y):")
             self.equation_entry.pack(fill='x', pady=(0, 10))
+            if not self.ic_frame.winfo_ismapped():
+                self.ic_frame.pack(fill='x', pady=(5, 5))
     
     def solve_equation(self):
         """Resuelve la ecuación según el método seleccionado"""
@@ -305,22 +337,28 @@ SEGUNDO ORDEN:
                     messagebox.showerror("Error", "Por favor ingrese una ecuación")
                     return
                 
+                try:
+                    initial_conditions = self._get_initial_conditions()
+                except ValueError as ic_error:
+                    messagebox.showerror("Error", str(ic_error))
+                    return
+                
                 if method == 'general':
-                    result = self.solver.solve_general(equation)
+                    result = self.solver.solve_general(equation, initial_conditions=initial_conditions)
                 elif method == 'separable':
-                    result = self.solver.solve_separable(equation)
+                    result = self.solver.solve_separable(equation, initial_conditions=initial_conditions)
                 elif method == 'homogeneous':
-                    result = self.solver.solve_homogeneous(equation)
+                    result = self.solver.solve_homogeneous(equation, initial_conditions=initial_conditions)
                 elif method == 'linear':
-                    result = self.solver.solve_linear(equation)
+                    result = self.solver.solve_linear(equation, initial_conditions=initial_conditions)
                 elif method == 'bernoulli':
-                    result = self.solver.solve_bernoulli(equation)
+                    result = self.solver.solve_bernoulli(equation, initial_conditions=initial_conditions)
                 elif method == 'second_order_const':
-                    result = self.solver.solve_second_order_constant_coeff(equation)
+                    result = self.solver.solve_second_order_constant_coeff(equation, initial_conditions=initial_conditions)
                 elif method == 'reducible':
-                    result = self.solver.solve_reducible_to_first_order(equation)
+                    result = self.solver.solve_reducible_to_first_order(equation, initial_conditions=initial_conditions)
                 elif method == 'variation_params':
-                    result = self.solver.solve_variation_of_parameters(equation)
+                    result = self.solver.solve_variation_of_parameters(equation, initial_conditions=initial_conditions)
             
             self._show_latex_solution(result)
             
@@ -386,8 +424,26 @@ SEGUNDO ORDEN:
         self.equation_entry.delete(0, "end")
         self.m_entry.delete(0, "end")
         self.n_entry.delete(0, "end")
+        self.x0_entry.delete(0, "end")
+        self.y0_entry.delete(0, "end")
+        self.yp0_entry.delete(0, "end")
         self.solution_title.configure(text="")
         self._clear_latex_image()
+
+    def _get_initial_conditions(self):
+        x0 = self.x0_entry.get().strip()
+        y0 = self.y0_entry.get().strip()
+        yp0 = self.yp0_entry.get().strip()
+        if not any([x0, y0, yp0]):
+            return None
+        if not x0:
+            raise ValueError("Ingrese x0 para aplicar condiciones iniciales")
+        ic_dict = {'x0': x0}
+        if y0:
+            ic_dict['y0'] = y0
+        if yp0:
+            ic_dict['yp0'] = yp0
+        return ic_dict
 
 
 def main():
