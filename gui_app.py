@@ -150,7 +150,41 @@ class ODESolverGUI:
             placeholder_text="Ingrese su ecuación aquí..."
         )
         self.equation_entry.pack(fill='x', pady=(0, 10))
-        
+
+        # Panel de caracteres especiales
+        special_chars_frame = ctk.CTkFrame(input_container, fg_color="transparent")
+        special_chars_frame.pack(fill='x', pady=(0, 10))
+
+        special_label = ctk.CTkLabel(
+            special_chars_frame,
+            text="Caracteres especiales (clic para insertar):",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        special_label.pack(anchor='w')
+
+        chars = [
+            ('√', 'sqrt( )'),
+            ('π', 'pi'),
+            ('e', 'e'),
+            ('ln', 'log( )'),
+            ('∫', 'integrate( , x)'),
+            ("d/dx", "'"),
+            ('^', '**')
+        ]
+
+        chars_container = ctk.CTkFrame(special_chars_frame, fg_color="transparent")
+        chars_container.pack(fill='x', pady=(5, 0))
+
+        for idx, (label, value) in enumerate(chars):
+            btn = ctk.CTkButton(
+                chars_container,
+                text=label,
+                width=50,
+                height=32,
+                command=lambda val=value: self.insert_special_character(val)
+            )
+            btn.grid(row=0, column=idx, padx=4)
+
         # Condiciones iniciales (opcional)
         self.ic_frame = ctk.CTkFrame(input_container, fg_color="transparent")
         self.ic_frame.pack(fill='x', pady=(5, 5))
@@ -280,7 +314,17 @@ SEGUNDO ORDEN:
         self.latex_image_label = ctk.CTkLabel(main_frame, text="")
         self.latex_image_label.pack(pady=(5, 15))
         self.latex_image_label.pack_forget()
-    
+
+    def insert_special_character(self, text):
+        """Inserta caracteres especiales en el campo enfocado"""
+        widget = self.root.focus_get()
+        if widget is None or not hasattr(widget, 'insert'):
+            widget = self.equation_entry
+        try:
+            widget.insert('insert', text)
+        except Exception:
+            pass
+
     def on_method_change(self):
         """Actualiza la interfaz según el método seleccionado"""
         method = self.method_var.get()
