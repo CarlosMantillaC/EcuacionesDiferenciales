@@ -68,13 +68,13 @@ class ODESolverGUI:
         separator1.pack(pady=(5, 10))
         
         methods_first_order = [
-            ('🤖 Método General (Automático)', 'general'),
-            ('📊 Variables Separables', 'separable'),
-            ('🔄 Ecuaciones Homogéneas', 'homogeneous'),
-            ('✓ Ecuaciones Exactas', 'exact'),
-            ('📈 Ecuaciones Lineales', 'linear'),
-            ('🎯 Ecuaciones de Bernoulli', 'bernoulli'),
-            ('⚙️ Factores Integrantes', 'integrating_factor')
+            ('Método General (Automático)', 'general'),
+            ('Variables Separables', 'separable'),
+            ('Ecuaciones Homogéneas', 'homogeneous'),
+            ('Ecuaciones Exactas', 'exact'),
+            ('Ecuaciones Lineales', 'linear'),
+            ('Ecuaciones de Bernoulli', 'bernoulli'),
+            ('Factores Integrantes', 'integrating_factor')
         ]
         
         # Crear grid de radio buttons para primer orden
@@ -102,8 +102,8 @@ class ODESolverGUI:
         separator2.pack(pady=(10, 10))
         
         methods_second_order = [
-            ('🔢 Coeficientes Constantes', 'second_order_const'),
-            ('🔄 Reducible a Primer Orden', 'reducible')
+            ('Coeficientes Constantes', 'second_order_const'),
+            ('Reducible a Primer Orden', 'reducible')
         ]
         
         radio_container2 = ctk.CTkFrame(method_frame, fg_color="transparent")
@@ -253,16 +253,16 @@ class ODESolverGUI:
         examples_title.pack(pady=(10, 5))
         
         examples_text = """PRIMER ORDEN:
-📊 Variables Separables: dy/dx = x*y  |  y' = x/y
-🔄 Homogéneas: dy/dx = (x+y)/x  |  y' = y/x + x/y
-✓ Exactas: M(x,y) = 2*x*y, N(x,y) = x**2 + 1
-📈 Lineales: dy/dx + y = x  |  y' + 2*x*y = x**2
-🎯 Bernoulli: dy/dx + y = x*y**2  |  y' - y = x*y**3
-⚙️ Factores Integrantes: M(x,y) = 3*x**2 + y, N(x,y) = x**2*y - x
+Variables Separables: dy/dx = x*y  |  y' = x/y
+Homogéneas: dy/dx = (x+y)/x  |  y' = y/x + x/y
+Exactas: M(x,y) = 2*x*y, N(x,y) = x**2 + 1
+Lineales: dy/dx + y = x  |  y' + 2*x*y = x**2
+Bernoulli: dy/dx + y = x*y**2  |  y' - y = x*y**3
+Factores Integrantes: M(x,y) = 3*x**2 + y, N(x,y) = x**2*y - x
 
 SEGUNDO ORDEN:
-🔢 Coef. Constantes: y'' - 3*y' + 2*y = 0  |  y'' + y = x
-🔄 Reducible: y'' = x  |  y'' = y'**2"""
+Coef. Constantes: y'' - 3*y' + 2*y = 0  |  y'' + y = x
+Reducible: y'' = x  |  y'' = y'**2"""
         
         examples_label = ctk.CTkLabel(
             examples_frame,
