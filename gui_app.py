@@ -36,7 +36,7 @@ class ODESolverGUI:
         # Título
         title_label = ctk.CTkLabel(
             self.root,
-            text="🔬 Solucionador de Ecuaciones Diferenciales Ordinarias",
+            text="🔬 Solucionador de Ecuaciones Diferenciales",
             font=ctk.CTkFont(size=24, weight="bold")
         )
         title_label.pack(pady=20)
@@ -103,8 +103,7 @@ class ODESolverGUI:
         
         methods_second_order = [
             ('🔢 Coeficientes Constantes', 'second_order_const'),
-            ('🔄 Reducible a Primer Orden', 'reducible'),
-            ('📐 Variación de Parámetros', 'variation_params')
+            ('🔄 Reducible a Primer Orden', 'reducible')
         ]
         
         radio_container2 = ctk.CTkFrame(method_frame, fg_color="transparent")
@@ -229,8 +228,7 @@ class ODESolverGUI:
 
 SEGUNDO ORDEN:
 🔢 Coef. Constantes: y'' - 3*y' + 2*y = 0  |  y'' + y = x
-🔄 Reducible: y'' = x  |  y'' = y'**2
-📐 Variación: y'' + y = sec(x)"""
+🔄 Reducible: y'' = x  |  y'' = y'**2"""
         
         examples_label = ctk.CTkLabel(
             examples_frame,
@@ -305,7 +303,7 @@ SEGUNDO ORDEN:
             self.n_entry.pack(fill='x', pady=(0, 10))
         else:
             # Mostrar campo de ecuación normal
-            if method in ['second_order_const', 'reducible', 'variation_params']:
+            if method in ['second_order_const', 'reducible']:
                 self.equation_label.configure(text="Ecuación de Segundo Orden (ej: y'' - 3*y' + 2*y = 0):")
             else:
                 self.equation_label.configure(text="Ecuación (ej: dy/dx = x*y, y' = x + y):")
@@ -357,8 +355,6 @@ SEGUNDO ORDEN:
                     result = self.solver.solve_second_order_constant_coeff(equation, initial_conditions=initial_conditions)
                 elif method == 'reducible':
                     result = self.solver.solve_reducible_to_first_order(equation, initial_conditions=initial_conditions)
-                elif method == 'variation_params':
-                    result = self.solver.solve_variation_of_parameters(equation, initial_conditions=initial_conditions)
             
             self._show_latex_solution(result)
             

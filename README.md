@@ -24,8 +24,6 @@ Aplicación completa en Python para resolver ecuaciones diferenciales ordinarias
   - `y'' = f(x)`
   - `y'' = f(y')`
   - `y'' = f(y, y')`
-- **Variación de Parámetros**: Para ecuaciones no homogéneas
-
 ## 🚀 Instalación
 
 1. **Clonar el repositorio**:

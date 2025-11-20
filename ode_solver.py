@@ -148,8 +148,7 @@ class ODESolver:
                 'solution': str(solution),
                 'solution_formatted': self.format_solution(solution),
                 'solution_latex': self.get_latex_solution(solution),
-                'method': 'Variables Separables',
-                'steps': self._get_separable_steps(eq)
+                'method': 'Variables Separables'
             }
         except Exception as e:
             return {
@@ -191,8 +190,7 @@ class ODESolver:
                 'solution': str(solution_simplified),
                 'solution_formatted': self.format_solution(solution_simplified),
                 'solution_latex': self.get_latex_solution(solution_simplified),
-                'method': 'Ecuación Homogénea',
-                'steps': 'Sustitución: v = y/x, entonces y = vx y dy/dx = v + x(dv/dx)'
+                'method': 'Ecuación Homogénea'
             }
         except Exception as e:
             return {
@@ -235,8 +233,7 @@ class ODESolver:
                     'success': True,
                     'solution': solution,
                     'method': 'Ecuación Exacta',
-                    'is_exact': True,
-                    'steps': f'∂M/∂y = {dM_dy}\n∂N/∂x = {dN_dx}\nLa ecuación es exacta.'
+                    'is_exact': True
                 }
             else:
                 return {
@@ -281,8 +278,7 @@ class ODESolver:
                 'solution': str(solution),
                 'solution_formatted': self.format_solution(solution),
                 'solution_latex': self.get_latex_solution(solution),
-                'method': 'Ecuación Lineal',
-                'steps': 'Forma estándar: dy/dx + P(x)y = Q(x)\nFactor integrante: μ(x) = e^(∫P(x)dx)'
+                'method': 'Ecuación Lineal'
             }
         except Exception as e:
             return {
@@ -318,8 +314,7 @@ class ODESolver:
                 'solution': str(solution),
                 'solution_formatted': self.format_solution(solution),
                 'solution_latex': self.get_latex_solution(solution),
-                'method': 'Ecuación de Bernoulli',
-                'steps': f'Forma: dy/dx + P(x)y = Q(x)y^n\nSustitución: v = y^(1-n), transforma en ecuación lineal'
+                'method': 'Ecuación de Bernoulli'
             }
         except Exception as e:
             return {
@@ -349,11 +344,15 @@ class ODESolver:
                 
                 if not factor_x_simplified.has(y):
                     mu = exp(integrate(factor_x_simplified, x))
+                    mu_str = str(mu)
                     return {
                         'success': True,
-                        'factor': str(mu),
+                        'factor': mu_str,
                         'type': 'μ(x)',
-                        'method': 'Factor Integrante'
+                        'method': 'Factor Integrante',
+                        'solution': f"μ(x) = {mu_str}",
+                        'solution_formatted': f"μ(x) = {mu_str}",
+                        'solution_latex': f"\\mu(x) = {latex(mu)}"
                     }
             except:
                 pass
@@ -365,11 +364,15 @@ class ODESolver:
                 
                 if not factor_y_simplified.has(x):
                     mu = exp(integrate(factor_y_simplified, y))
+                    mu_str = str(mu)
                     return {
                         'success': True,
-                        'factor': str(mu),
+                        'factor': mu_str,
                         'type': 'μ(y)',
-                        'method': 'Factor Integrante'
+                        'method': 'Factor Integrante',
+                        'solution': f"μ(y) = {mu_str}",
+                        'solution_formatted': f"μ(y) = {mu_str}",
+                        'solution_latex': f"\\mu(y) = {latex(mu)}"
                     }
             except:
                 pass
@@ -449,15 +452,12 @@ class ODESolver:
             hints = sp.classify_ode(eq, y)
             is_homogeneous = 'nth_linear_constant_coeff_homogeneous' in hints
             
-            steps = self._get_second_order_steps(eq, is_homogeneous)
-            
             return {
                 'success': True,
                 'solution': str(solution),
                 'solution_formatted': self.format_solution(solution),
                 'solution_latex': self.get_latex_solution(solution),
                 'method': 'Ecuación de Segundo Orden con Coeficientes Constantes',
-                'steps': steps,
                 'is_homogeneous': is_homogeneous
             }
         except Exception as e:
@@ -486,22 +486,12 @@ class ODESolver:
             
             solution = dsolve(eq, y)
             
-            steps_dict = {
-                'f_x': 'Caso: y\'\' = f(x)\nSolución: Integrar dos veces\ny\' = ∫f(x)dx + C₁\ny = ∫(∫f(x)dx)dx + C₁x + C₂',
-                'f_yp': 'Caso: y\'\' = f(y\')\nSustitución: p = y\', entonces y\'\' = dp/dx\nSe reduce a: dp/dx = f(p)',
-                'f_y_yp': 'Caso: y\'\' = f(y, y\')\nSustitución: p = y\', entonces y\'\' = p(dp/dy)\nSe reduce a ecuación de primer orden en p',
-                'general': 'Ecuación reducible a primer orden mediante sustitución apropiada'
-            }
-            
-            steps = steps_dict.get(case_type, steps_dict['general'])
-            
             return {
                 'success': True,
                 'solution': str(solution),
                 'solution_formatted': self.format_solution(solution),
                 'solution_latex': self.get_latex_solution(solution),
-                'method': 'Ecuación Reducible a Primer Orden',
-                'steps': steps
+                'method': 'Ecuación Reducible a Primer Orden'
             }
         except Exception as e:
             return {
@@ -510,68 +500,6 @@ class ODESolver:
                 'method': 'Ecuación Reducible a Primer Orden'
             }
     
-    def solve_variation_of_parameters(self, equation_str, initial_conditions=None):
-        """
-        Resuelve ecuaciones no homogéneas usando variación de parámetros
-        ay'' + by' + cy = g(x)
-        """
-        try:
-            y = self.y(self.x)
-            eq_str = self.parse_equation(equation_str)
-            
-            if '=' in eq_str:
-                parts = eq_str.split('=')
-                lhs = self._parse(parts[0])
-                rhs = self._parse(parts[1])
-                eq = Eq(lhs, rhs)
-            else:
-                eq = self._parse(eq_str)
-            
-            solution = dsolve(eq, y)
-            
-            steps = """Método de Variación de Parámetros:
-1. Resolver ecuación homogénea: ay'' + by' + cy = 0 → y_h
-2. Encontrar soluciones fundamentales y₁, y₂
-3. Calcular Wronskiano: W = y₁y₂' - y₁'y₂
-4. Solución particular: y_p = -y₁∫(y₂g/W)dx + y₂∫(y₁g/W)dx
-5. Solución general: y = y_h + y_p"""
-            
-            return {
-                'success': True,
-                'solution': str(solution),
-                'solution_formatted': self.format_solution(solution),
-                'solution_latex': self.get_latex_solution(solution),
-                'method': 'Variación de Parámetros',
-                'steps': steps
-            }
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'method': 'Variación de Parámetros'
-            }
-    
-    
-    def _get_second_order_steps(self, eq, is_homogeneous):
-        """Genera pasos para ecuaciones de segundo orden con coeficientes constantes"""
-        if is_homogeneous:
-            return """Ecuación homogénea: ay'' + by' + cy = 0
-1. Ecuación característica: ar² + br + c = 0
-2. Resolver para r (raíces r₁, r₂)
-3. Casos:
-   • Raíces reales distintas: y = C₁e^(r₁x) + C₂e^(r₂x)
-   • Raíz doble r: y = (C₁ + C₂x)e^(rx)
-   • Raíces complejas α±βi: y = e^(αx)(C₁cos(βx) + C₂sin(βx))"""
-        else:
-            return """Ecuación no homogénea: ay'' + by' + cy = g(x)
-1. Solución homogénea: y_h (resolver ay'' + by' + cy = 0)
-2. Solución particular: y_p (usando coeficientes indeterminados o variación de parámetros)
-3. Solución general: y = y_h + y_p"""
-    
-    def _get_separable_steps(self, eq):
-        """Genera pasos para ecuaciones separables"""
-        return "1. Separar variables: g(y)dy = f(x)dx\n2. Integrar ambos lados\n3. Resolver para y"
-
     def _solve_special_cases(self, eq):
         """Intenta resolver casos especiales no cubiertos por SymPy"""
         handlers = (
@@ -592,17 +520,11 @@ class ODESolver:
         target = sp.simplify(sp.diff(y * diff(y, self.x), self.x))
         if sp.simplify(expr - target) == 0:
             solution_eq = Eq(y**2, self.C1 * self.x + self.C2)
-            steps = (
-                "1. Observa que d/dx[y·y'] = y·y'' + (y')^2\n"
-                "2. Integra una vez: y·y' = C₁\n"
-                "3. Integra nuevamente: y^2 = C₁x + C₂"
-            )
             return {
                 'success': True,
                 'solution': str(solution_eq),
                 'solution_formatted': self.format_solution(solution_eq),
                 'solution_latex': self.get_latex_solution(solution_eq),
-                'method': "Caso especial: y·y'' + (y')² = 0",
-                'steps': steps
+                'method': "Caso especial: y·y'' + (y')² = 0"
             }
         return None
