@@ -228,10 +228,13 @@ class ODESolver:
                 F = F + g_y
                 
                 solution = f"F(x,y) = {F} = C"
+                solution_eq = Eq(sp.simplify(F), sp.Symbol('C'))
                 
                 return {
                     'success': True,
                     'solution': solution,
+                    'solution_formatted': self.format_solution(solution_eq),
+                    'solution_latex': self.get_latex_solution(solution_eq),
                     'method': 'Ecuación Exacta',
                     'is_exact': True
                 }
